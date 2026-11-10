@@ -1,88 +1,484 @@
-# İDDEF | Bir Su Kuyusu Neden Açılır?
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İDDEF - Bir Su Kuyusu Neden Açılır?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background-color: #0b0f19;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 177.77vw; /* 9:16 aspect ratio */
+      max-height: 100vh;
+      max-width: 56.25vh; /* 100 * 9 / 16 */
+      background: #000;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8% 6%;
+      z-index: 10;
+    }
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0.95;
+    }
+    .brand-logo {
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 900;
+      font-size: 1.1rem;
+      letter-spacing: 1.5px;
+      padding: 6px 14px;
+      border-radius: 6px;
+    }
+    .brand-slogan {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+    }
+    .content-box {
+      text-align: center;
+      margin-bottom: 12%;
+    }
+    .scene-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.3;
+      margin-bottom: 12px;
+      text-shadow: 0 4px 14px rgba(0,0,0,0.8);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .scene-desc {
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: rgba(240, 249, 255, 0.9);
+      line-height: 1.5;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .timeline {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      width: 100%;
+    }
+    .timeline-progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    }
+  </style>
+</head>
+<body>
 
-## Proje Tanımı
+  <div id="stage">
+    <canvas id="animCanvas"></canvas>
+    <div class="overlay">
+      <div class="brand-header">
+        <div class="brand-logo">İDDEF</div>
+        <div class="brand-slogan">Muhabbetle İnsanlığa Hizmet</div>
+      </div>
+      <div class="content-box">
+        <h1 class="scene-title" id="titleText">Suya Hasret Coğrafyalar</h1>
+        <p class="scene-desc" id="descText">Afrika ve Asya'da temiz suya ulaşmak için her gün kilometrelerce yürümek zorunda kalan milyonlar...</p>
+      </div>
+    </div>
+    <div class="timeline">
+      <div class="timeline-progress" id="progress"></div>
+    </div>
+  </div>
 
-İDDEF için Afrika ve Asya'daki su kuyusu çalışmalarını anlatan, profesyonel, sinematik ve duygusal bir farkındalık videosu hazırlanacaktır.
+  <script>
+    const canvas = document.getElementById('animCanvas');
+    const ctx = canvas.getContext('2d');
+    const titleEl = document.getElementById('titleText');
+    const descEl = document.getElementById('descText');
+    const progressEl = document.getElementById('progress');
 
-**Video süresi:** 45 saniye  
-**Format:** 9:16 dikey  
-**Çözünürlük:** 1080 × 1920  
-**Kare hızı:** 30 FPS  
-**Dil:** Türkçe  
-**Marka:** İDDEF  
-**Slogan:** Muhabbetle İnsanlığa Hizmete
+    // Dikey video çözünürlük oranı: 1080 x 1920
+    const W = 1080;
+    const H = 1920;
+    canvas.width = W;
+    canvas.height = H;
 
-## Ana Mesaj
+    const TOTAL_DURATION = 40; // saniye
+    let startTime = null;
 
-Bir su kuyusu neden açılır?
+    // Sahne Akışı (Brifing doğrultusunda 5 sahne)
+    const SCENES = [
+      {
+        duration: 8,
+        title: "Suya Hasret Coğrafyalar",
+        desc: "Temiz suya ulaşmak için her gün kilometrelerce çorak toprakları aşmak zorunda kalan hayatlar.",
+        theme: "arid"
+      },
+      {
+        duration: 8,
+        title: "Su Hayattır, Yarındır",
+        desc: "Temiz suya erişim; yalnızca bir içecek değil, eğitim, sağlık ve çocukların geleceğidir.",
+        theme: "hope"
+      },
+      {
+        duration: 9,
+        title: "Kuyudan Yükselen Hayat",
+        desc: "Açılan bir su kuyusu ile yerin metrelerce altından yeryüzüne ilk temiz suyun bereketi müjdelenir.",
+        theme: "well"
+      },
+      {
+        duration: 8,
+        title: "Kalıcı Çözüm: İDDEF",
+        desc: "İDDEF, mazlum coğrafyalarda kalıcı su kuyuları inşa ederek susuzluğa umut olmaya devam ediyor.",
+        theme: "map"
+      },
+      {
+        duration: 7,
+        title: "Sen de Bir Hayata Umut Ol",
+        desc: "Bir su kuyusu binlerce hayata can suyu olur. Bir kova suyla geleceği birlikte yeşertelim.",
+        theme: "cta"
+      }
+    ];
 
-Temiz suya erişimin zor olduğu bölgelerde su kuyuları, insanların günlük yaşamlarını kolaylaştırmak, temiz su ihtiyacına çözüm sunmak ve geleceğe umut olmak için açılır.
+    // Parçacık motoru (su damlaları, çöl tozu, ışık huzmeleri)
+    const particles = [];
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 4 + 1.5,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.7 + 0.3
+      });
+    }
 
-Video bu soruyu cevaplamalı ve izleyiciyi İDDEF'in Afrika ve Asya'daki su kuyusu çalışmalarına destek olmaya davet etmelidir.
+    let currentSceneIdx = -1;
 
-## Hikâye Akışı
+    function render(time) {
+      if (!startTime) startTime = time;
+      const elapsed = (time - startTime) / 1000;
+      const progress = Math.min(elapsed / TOTAL_DURATION, 1);
+      progressEl.style.width = (progress * 100) + '%';
 
-### 1. Susuzluk
+      // Aktif sahneyi hesapla
+      let accumulatedTime = 0;
+      let activeIdx = 0;
+      let sceneLocalTime = 0;
 
-Kurak topraklar, suya ulaşmak için mesafeler katetmek zorunda kalan insanlar.
+      for (let i = 0; i < SCENES.length; i++) {
+        if (elapsed < accumulatedTime + SCENES[i].duration || i === SCENES.length - 1) {
+          activeIdx = i;
+          sceneLocalTime = elapsed - accumulatedTime;
+          break;
+        }
+        accumulatedTime += SCENES[i].duration;
+      }
 
-Ekran yazısı:
+      // Sahne değişimi durumunda metin güncelleme
+      if (activeIdx !== currentSceneIdx) {
+        currentSceneIdx = activeIdx;
+        titleEl.style.opacity = '0';
+        descEl.style.opacity = '0';
+        setTimeout(() => {
+          titleEl.textContent = SCENES[activeIdx].title;
+          descEl.textContent = SCENES[activeIdx].desc;
+          titleEl.style.opacity = '1';
+          descEl.style.opacity = '1';
+        }, 300);
+      }
 
-"Su, hayatın en temel ihtiyacıdır."
+      ctx.clearRect(0, 0, W, H);
 
-### 2. Neden Su Kuyusu?
+      // Sahne Çizimleri
+      switch (SCENES[activeIdx].theme) {
+        case "arid":
+          drawAridScene(sceneLocalTime);
+          break;
+        case "hope":
+          drawHopeScene(sceneLocalTime);
+          break;
+        case "well":
+          drawWellGushScene(sceneLocalTime);
+          break;
+        case "map":
+          drawImpactMapScene(sceneLocalTime);
+          break;
+        case "cta":
+          drawCtaScene(sceneLocalTime);
+          break;
+      }
 
-Temiz suya erişimin günlük yaşama etkileri anlatılmalı.
+      if (elapsed < TOTAL_DURATION) {
+        requestAnimationFrame(render);
+      } else {
+        // Döngü
+        startTime = null;
+        currentSceneIdx = -1;
+        requestAnimationFrame(render);
+      }
+    }
 
-Ekran yazısı:
+    // 1. Sahne: Çorak Toprak & Toz Fırtınası
+    function drawAridScene(t) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "#2c1810");
+      grad.addColorStop(0.5, "#6b3e26");
+      grad.addColorStop(1, "#c27d4b");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-"Bir su kuyusu, yalnızca su değil; hayat taşır."
+      // Güneş
+      ctx.save();
+      const sunGrad = ctx.createRadialGradient(W / 2, H * 0.35, 10, W / 2, H * 0.35, 300);
+      sunGrad.addColorStop(0, "rgba(255, 235, 180, 0.9)");
+      sunGrad.addColorStop(0.3, "rgba(245, 158, 11, 0.4)");
+      sunGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(W / 2, H * 0.35, 300, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
-### 3. Çözüm
+      // Çöl kum tepeleri
+      ctx.fillStyle = "#3b1e10";
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.72);
+      ctx.bezierCurveTo(W * 0.3, H * 0.68, W * 0.7, H * 0.78, W, H * 0.73);
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.fill();
 
-Su kuyusunun açılma süreci, sondaj ve ilk suyun çıkışı gösterilmeli.
+      // Sıcaklık & Toz Parçacıkları
+      ctx.fillStyle = "rgba(254, 215, 170, 0.4)";
+      particles.forEach(p => {
+        p.x += p.vx * 2;
+        p.y -= p.vy * 0.6;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
 
-Ekran yazısı:
+    // 2. Sahne: Umut & Su Damlası Yansıması
+    function drawHopeScene(t) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "#082f49");
+      grad.addColorStop(0.5, "#0284c7");
+      grad.addColorStop(1, "#38bdf8");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-"Bir kuyu, nice hayata umut olur."
+      // Işık huzmeleri (Tanrı ışıkları)
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(W / 2 + Math.sin(t + i) * 60, 0);
+        ctx.lineTo(-200 + i * 280, H);
+        ctx.lineTo(-100 + i * 280, H);
+        ctx.fill();
+      }
+      ctx.restore();
 
-### 4. İDDEF'in Çalışmaları
+      // Ortada parlayan büyük damla motifi
+      const dropY = H * 0.46 + Math.sin(t * 2) * 15;
+      const dropGrad = ctx.createRadialGradient(W / 2, dropY, 5, W / 2, dropY, 110);
+      dropGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+      dropGrad.addColorStop(0.5, "rgba(56, 189, 248, 0.8)");
+      dropGrad.addColorStop(1, "rgba(2, 132, 199, 0)");
 
-Afrika ve Asya harita animasyonu ile İDDEF'in su kuyusu çalışmalarına geçiş yapılmalı.
+      ctx.fillStyle = dropGrad;
+      ctx.beginPath();
+      ctx.arc(W / 2, dropY, 110, 0, Math.PI * 2);
+      ctx.fill();
 
-Ekran yazısı:
+      // Su halkası dalgaları
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.lineWidth = 3;
+      const rippleRadius = (t * 60) % 220;
+      ctx.beginPath();
+      ctx.arc(W / 2, H * 0.65, rippleRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
-"İDDEF, Afrika ve Asya'da temiz suya ulaşmak için çalışıyor."
+    // 3. Sahne: Kuyunun Açılışı & Coşkulu Su Akışı
+    function drawWellGushScene(t) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "#0369a1");
+      grad.addColorStop(0.6, "#0284c7");
+      grad.addColorStop(1, "#bae6fd");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-### 5. İyiliğe Davet
+      // Su Kuyusu Kaidesi
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(W * 0.35, H * 0.62, W * 0.3, H * 0.2);
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(W * 0.32, H * 0.60, W * 0.36, 30);
 
-Temiz sudan faydalanan insanlar ve kuyudan akan su gösterilmeli.
+      // Çeşme Borusu
+      ctx.fillStyle = "#64748b";
+      ctx.fillRect(W * 0.5 - 20, H * 0.52, 40, 110);
+      ctx.fillRect(W * 0.44, H * 0.52, 70, 25);
 
-Ekran yazısı:
+      // Fışkıran Su & Köpükler
+      ctx.fillStyle = "#ffffff";
+      for (let i = 0; i < 40; i++) {
+        const streamX = W * 0.44 - (i * 2) + (Math.sin(t * 12 + i) * 12);
+        const streamY = H * 0.53 + (i * 12);
+        ctx.beginPath();
+        ctx.arc(streamX, streamY, 9 + Math.random() * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-"Sen de bir hayata umut ol."
+      // Parçacıklar (Su serpintisi)
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      particles.forEach(p => {
+        p.y += p.vy * 4;
+        p.x += (Math.random() - 0.5) * 5;
+        if (p.y > H * 0.85) {
+          p.y = H * 0.53;
+          p.x = W * 0.42 + (Math.random() - 0.5) * 40;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
 
-"Su kuyusu çalışmalarımıza destek olun."
+    // 4. Sahne: Harita ve İDDEF Etkisi
+    function drawImpactMapScene(t) {
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, W, H);
 
-İDDEF logosu ve kurumsal sloganla bitirilmeli.
+      // Dijital Ağ & Izgara çizgileri
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.12)";
+      ctx.lineWidth = 2;
+      for (let x = 0; x < W; x += 90) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 90) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
 
-## Görsel Yönetmenlik
+      // Temsili Kuyu Noktaları (Afrika & Asya Etki Ağı)
+      const points = [
+        { x: W * 0.45, y: H * 0.45, label: "Çad" },
+        { x: W * 0.55, y: H * 0.52, label: "Somali" },
+        { x: W * 0.38, y: H * 0.48, label: "Nijer" },
+        { x: W * 0.65, y: H * 0.40, label: "Afganistan" },
+        { x: W * 0.72, y: H * 0.46, label: "Bangladeş" }
+      ];
 
-- Fotogerçekçi ve sinematik anlatım.
-- Profesyonel kamera hareketleri.
-- Doğal ışık ve gerçekçi çevre detayları.
-- Toprak tonları, sıcak güneş ışığı ve su mavisi.
-- Sade ve premium tipografi.
-- Akıcı geçişler.
-- İnsan onurunu koruyan insani yardım anlatımı.
-- Abartılı dramadan kaçınılmalı.
+      points.forEach((pt, idx) => {
+        const pulse = (Math.sin(t * 3 + idx) + 1) * 20;
 
-## Teknik Hedef
+        // Nabız Halkası
+        ctx.strokeStyle = "rgba(14, 165, 233, 0.6)";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 18 + pulse, 0, Math.PI * 2);
+        ctx.stroke();
 
-Bu proje için öncelikle profesyonel bir storyboard hazırlanmalı, ardından sahne sahne HTML, CSS, SVG ve Canvas tabanlı animasyon oluşturulmalıdır.
+        // Merkez Nokta
+        ctx.fillStyle = "#38bdf8";
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
+        ctx.fill();
 
-Animasyonun MP4 olarak dışa aktarılması hedeflenmektedir.
+        // Nokta Etiketi
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 24px sans-serif";
+        ctx.fillText(pt.label, pt.x + 22, pt.y + 8);
+      });
+    }
 
-Gerçek olmayan istatistik, kuyu sayısı veya saha başarısı kullanılmamalıdır.
+    // 5. Sahne: Güçlü Çağrı (Call to Action)
+    function drawCtaScene(t) {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "#0c4a6e");
+      grad.addColorStop(0.7, "#0369a1");
+      grad.addColorStop(1, "#0284c7");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-Gerçek İDDEF logosu ve saha görüntüleri sağlanmadığı sürece bunlar gerçekmiş gibi üretilmemelidir.
+      // Arka plan parıltısı
+      const glowGrad = ctx.createRadialGradient(W / 2, H * 0.45, 10, W / 2, H * 0.45, 340);
+      glowGrad.addColorStop(0, "rgba(255, 255, 255, 0.25)");
+      glowGrad.addColorStop(1, "rgba(2, 132, 199, 0)");
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(W / 2, H * 0.45, 340, 0, Math.PI * 2);
+      ctx.fill();
+
+      // İDDEF Vurgu Rozeti
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 68px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("İ D D E F", W / 2, H * 0.43);
+
+      ctx.fillStyle = "#bae6fd";
+      ctx.font = "500 32px sans-serif";
+      ctx.fillText("Su Kuyusu Çalışmaları", W / 2, H * 0.47);
+
+      // Yükselen Su Habecikleri
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      particles.forEach(p => {
+        p.y -= p.vy * 2.5;
+        if (p.y < 0) p.y = H;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    // Başlat
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
