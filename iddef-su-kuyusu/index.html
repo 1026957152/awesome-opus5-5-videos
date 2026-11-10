@@ -3,482 +3,1417 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>İDDEF - Bir Su Kuyusu Neden Açılır?</title>
+  <title>İDDEF | Afganistan Yetimhane Su Kuyusu Projesi - 3D Sinematik Sunum</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #0284c7;
+      --primary-light: #38bdf8;
+      --gold: #f59e0b;
+      --dark: #070b14;
+      --glass: rgba(10, 18, 32, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.14);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       user-select: none;
     }
+
     body {
-      background-color: #0b0f19;
+      background-color: #03060c;
+      color: #ffffff;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      overflow: hidden;
     }
-    #stage {
+
+    /* 16:9 / 9:16 Değiştirilebilir Sinematik Sahne Çerçevesi */
+    #viewport-wrapper {
       position: relative;
       width: 100vw;
-      height: 177.77vw; /* 9:16 aspect ratio */
-      max-height: 100vh;
-      max-width: 56.25vh; /* 100 * 9 / 16 */
-      background: #000;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      height: 100vh;
       overflow: hidden;
+      background: #000;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    canvas {
+
+    #viewport-wrapper.vertical-mode {
+      width: 56.25vh;
+      height: 100vh;
+      max-width: 100vw;
+      border-left: 1px solid rgba(255,255,255,0.12);
+      border-right: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 0 90px rgba(0, 0, 0, 0.95);
+    }
+
+    #canvas-container {
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
+      z-index: 1;
     }
-    .overlay {
+
+    /* Sinematik Vignette ve Film Grain Katmanı */
+    .cinematic-fx {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 8% 6%;
-      z-index: 10;
+      z-index: 2;
+      background:
+        radial-gradient(circle at center, transparent 45%, rgba(4, 9, 20, 0.65) 100%),
+        linear-gradient(180deg, rgba(4, 10, 22, 0.75) 0%, transparent 22%, transparent 62%, rgba(4, 10, 22, 0.92) 100%);
     }
-    .brand-header {
+
+    /* Üst Kurumsal Bar */
+    .hud-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 28px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .brand-lockup {
       display: flex;
       align-items: center;
-      gap: 12px;
-      opacity: 0.95;
+      gap: 14px;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      padding: 10px 20px;
+      border-radius: 100px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      pointer-events: auto;
     }
-    .brand-logo {
-      background: #0ea5e9;
+
+    .brand-badge {
+      background: linear-gradient(135deg, #0ea5e9, #0369a1);
       color: #fff;
-      font-weight: 900;
-      font-size: 1.1rem;
-      letter-spacing: 1.5px;
-      padding: 6px 14px;
-      border-radius: 6px;
-    }
-    .brand-slogan {
-      color: rgba(255, 255, 255, 0.75);
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.8px;
-    }
-    .content-box {
-      text-align: center;
-      margin-bottom: 12%;
-    }
-    .scene-title {
-      font-size: 1.7rem;
       font-weight: 800;
-      color: #ffffff;
-      line-height: 1.3;
-      margin-bottom: 12px;
-      text-shadow: 0 4px 14px rgba(0,0,0,0.8);
-      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .scene-desc {
       font-size: 1.05rem;
-      font-weight: 400;
-      color: rgba(240, 249, 255, 0.9);
-      line-height: 1.5;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      letter-spacing: 2px;
+      padding: 6px 14px;
+      border-radius: 50px;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
     }
-    .timeline {
+
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-location {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--primary-light);
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 500;
+    }
+
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .btn-glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .btn-glass:hover {
+      background: rgba(14, 165, 233, 0.28);
+      border-color: rgba(56, 189, 248, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-glass.active {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(2, 132, 199, 0.85));
+      border-color: #7dd3fc;
+    }
+
+    /* Alt Altyazı ve Hikaye Alanı */
+    .story-stage {
+      position: absolute;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(880px, 90%);
+      z-index: 10;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .scene-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(14, 165, 233, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #bae6fd;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+      transition: all 0.5s ease;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 10px #38bdf8;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.45; }
+    }
+
+    .subtitle-card {
+      background: rgba(7, 13, 25, 0.76);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 26px 34px;
+      border-radius: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+      transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .vo-quote {
+      font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+      font-weight: 700;
+      line-height: 1.45;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .vo-quote .highlight {
+      color: #38bdf8;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-weight: 700;
+      padding: 0 4px;
+    }
+
+    /* Final CTA Kartı (5. Sahne) */
+    .cta-banner {
+      margin-top: 18px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      pointer-events: auto;
+      animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .cta-banner.visible {
+      display: flex;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cta-item {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border: 1px solid rgba(125, 211, 252, 0.5);
+      padding: 12px 26px;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 0.5px;
+      color: #fff;
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(2, 132, 199, 0.5);
+    }
+
+    .cta-phone {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 12px 26px;
+      border-radius: 100px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 1px;
+      color: #bae6fd;
+    }
+
+    /* Alt Zaman Çizelgesi ve Sahne Seçici */
+    .timeline-bar {
       position: absolute;
       bottom: 0;
       left: 0;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.15);
-      width: 100%;
+      right: 0;
+      height: 68px;
+      background: linear-gradient(180deg, transparent, rgba(3, 7, 15, 0.96));
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 36px 18px 36px;
+      z-index: 12;
     }
-    .timeline-progress {
+
+    .scene-chapters {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chapter-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.65);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .chapter-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+    }
+
+    .chapter-btn.active {
+      background: rgba(14, 165, 233, 0.28);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+      background: linear-gradient(90deg, #38bdf8, #0284c7, #f59e0b);
+      border-radius: 10px;
+      transition: width 0.1s linear;
+    }
+
+    /* Başlangıç Kapak Katmanı (Ses Senkronizasyonu İçin) */
+    #start-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      background: radial-gradient(circle at center, rgba(12, 26, 48, 0.82) 0%, rgba(4, 8, 16, 0.96) 100%);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 32px;
+      text-align: center;
+      transition: opacity 0.6s ease;
+    }
+
+    #start-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .modal-card {
+      max-width: 580px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 28px;
+      padding: 40px 36px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-tag {
+      display: inline-block;
+      background: rgba(14, 165, 233, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 50px;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .modal-desc {
+      font-size: 0.95rem;
+      color: rgba(226, 232, 240, 0.8);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-primary-start {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff;
+      border: none;
+      padding: 16px 28px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 12px 30px rgba(14, 165, 233, 0.45);
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary-start:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 38px rgba(14, 165, 233, 0.65);
+    }
+
+    .audio-upload-box {
+      margin-top: 8px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .audio-upload-label {
+      color: #38bdf8;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    #voiceover-input {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .hud-header { padding: 16px; }
+      .scene-chapters { display: none; }
+      .story-stage { bottom: 48px; width: 92%; }
+      .subtitle-card { padding: 18px 20px; }
     }
   </style>
 </head>
 <body>
 
-  <div id="stage">
-    <canvas id="animCanvas"></canvas>
-    <div class="overlay">
-      <div class="brand-header">
-        <div class="brand-logo">İDDEF</div>
-        <div class="brand-slogan">Muhabbetle İnsanlığa Hizmet</div>
+  <div id="viewport-wrapper">
+    <div id="canvas-container"></div>
+    <div class="cinematic-fx"></div>
+
+    <!-- Kurumsal Üst Bar -->
+    <header class="hud-header">
+      <div class="brand-lockup">
+        <div class="brand-badge">İDDEF</div>
+        <div class="brand-meta">
+          <span class="brand-location">AFGANİSTAN YETİMHANESİ</span>
+          <span class="brand-sub">Su Kuyusu & Yaşam Kampüsü Projesi</span>
+        </div>
       </div>
-      <div class="content-box">
-        <h1 class="scene-title" id="titleText">Suya Hasret Coğrafyalar</h1>
-        <p class="scene-desc" id="descText">Afrika ve Asya'da temiz suya ulaşmak için her gün kilometrelerce yürümek zorunda kalan milyonlar...</p>
+
+      <div class="hud-controls">
+        <button class="btn-glass" id="btn-aspect" title="9:16 Dikey / 16:9 Yatay Mod">
+          <span>📱 9:16 Dikey Mod</span>
+        </button>
+        <button class="btn-glass" id="btn-audio-upload" title="Seslendirme MP3/WAV Dosyası Seç">
+          <span>🎙️ Ses Dosyası Seç</span>
+        </button>
+        <button class="btn-glass" id="btn-restart" title="Baştan Oynat">
+          <span>↻ Yeniden Başlat</span>
+        </button>
       </div>
-    </div>
-    <div class="timeline">
-      <div class="timeline-progress" id="progress"></div>
+    </header>
+
+    <!-- Senkronize Seslendirme ve Altyazı Alanı -->
+    <main class="story-stage">
+      <div class="scene-pill">
+        <span class="pulse-dot"></span>
+        <span id="scene-phase-label">SAHNE 01 / 05 • UMUDUN FİLİZLENİŞİ</span>
+      </div>
+
+      <div class="subtitle-card">
+        <p class="vo-quote" id="vo-subtitle">
+          Bir çocuk için <span class="highlight">su;</span> sağlık, temizlik ve daha güzel bir gelecek demek.
+        </p>
+
+        <div class="cta-banner" id="cta-banner">
+          <a href="https://www.iddef.org" target="_blank" class="cta-item">🌐 iddef.org</a>
+          <div class="cta-phone">📞 0212 621 00 65</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Alt Zaman Çizelgesi -->
+    <footer class="timeline-bar">
+      <div class="scene-chapters" id="chapter-list">
+        <button class="chapter-btn active" data-idx="0">01. Çocuk & Gelecek (00:00)</button>
+        <button class="chapter-btn" data-idx="1">02. Bir Damla Umut (00:05)</button>
+        <button class="chapter-btn" data-idx="2">03. Yetimhane Su Kuyusu (00:11)</button>
+        <button class="chapter-btn" data-idx="3">04. Hayata Dokunuş (00:19)</button>
+        <button class="chapter-btn" data-idx="4">05. İDDEF İletişim (00:24)</button>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="timeline-fill"></div>
+      </div>
+    </footer>
+
+    <!-- Yönetim Sunumu Başlangıç Ekranı -->
+    <div id="start-overlay">
+      <div class="modal-card">
+        <span class="modal-tag">KURUL & YÖNETİM ONAY SUNUMU • THREE.JS WebGL</span>
+        <h1 class="modal-title">Afganistan Yetimhanesi<br>Su Kuyusu Projesi</h1>
+        <p class="modal-desc">
+          Gerçek zamanlı 3D mimari simülasyon, hacimsel sis (rolling fog), dinamik su fiziği, güneş enerjili su kulesi ve seslendirme metniyle saniye saniye senkronize sinematik kamera akışı.
+        </p>
+
+        <div class="modal-actions">
+          <button class="btn-primary-start" id="btn-start-presentation">
+            <span>▶ Sunumu ve Animasyonu Başlat (29 Sn)</span>
+          </button>
+
+          <div class="audio-upload-box">
+            <span id="audio-status-text">Varsayılan: Web-Audio + Ses Dosyası (`seslendirme.mp3`)</span>
+            <label for="voiceover-input" class="audio-upload-label">Ses Dosyası Yükle</label>
+            <input type="file" id="voiceover-input" accept="audio/*">
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Varsayılan olarak aynı klasördeki seslendirme.mp3 dosyasını da otomatik dener -->
+  <audio id="vo-audio" src="seslendirme.mp3" preload="auto"></audio>
+
+  <!-- Three.js r128 CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
   <script>
-    const canvas = document.getElementById('animCanvas');
-    const ctx = canvas.getContext('2d');
-    const titleEl = document.getElementById('titleText');
-    const descEl = document.getElementById('descText');
-    const progressEl = document.getElementById('progress');
+    // ============================================================================
+    // 1. SESLENDİRME METNİ VE SANİYE SANİYE SENKRONİZE SAHNE AKIŞI (29 SANİYE)
+    // ============================================================================
+    const TOTAL_DURATION = 29.0;
 
-    // Dikey video çözünürlük oranı: 1080 x 1920
-    const W = 1080;
-    const H = 1920;
-    canvas.width = W;
-    canvas.height = H;
-
-    const TOTAL_DURATION = 40; // saniye
-    let startTime = null;
-
-    // Sahne Akışı (Brifing doğrultusunda 5 sahne)
-    const SCENES = [
+    const STORY_SCENES = [
       {
-        duration: 8,
-        title: "Suya Hasret Coğrafyalar",
-        desc: "Temiz suya ulaşmak için her gün kilometrelerce çorak toprakları aşmak zorunda kalan hayatlar.",
-        theme: "arid"
+        start: 0.0,
+        end: 5.2,
+        phase: "SAHNE 01 / 05 • UMUDUN FİLİZLENİŞİ",
+        html: 'Bir çocuk için <span class="highlight">su;</span> sağlık, temizlik ve daha güzel bir gelecek demek.',
+        camStart: { pos: [38, 12, 42], look: [0, 3, 0] },
+        camEnd:   { pos: [24, 9, 28],  look: [0, 3.5, 0] },
+        waterLevel: 0.25,
+        fountainPower: 0.3,
+        greeneryScale: 0.25,
+        fogDensity: 0.0085,
+        skyWarmth: 0.2
       },
       {
-        duration: 8,
-        title: "Su Hayattır, Yarındır",
-        desc: "Temiz suya erişim; yalnızca bir içecek değil, eğitim, sağlık ve çocukların geleceğidir.",
-        theme: "hope"
+        start: 5.2,
+        end: 11.0,
+        phase: "SAHNE 02 / 05 • AFGANİSTAN'DA BİR DAMLA UMUT",
+        html: 'Afganistan’da yetim yavrularımızın hayatına <span class="highlight">bir damla ile</span> umut oluyoruz.',
+        camStart: { pos: [24, 9, 28],  look: [0, 3.5, 0] },
+        camEnd:   { pos: [-16, 7.5, 22], look: [-2, 4, -4] },
+        waterLevel: 0.55,
+        fountainPower: 0.65,
+        greeneryScale: 0.55,
+        fogDensity: 0.0065,
+        skyWarmth: 0.5
       },
       {
-        duration: 9,
-        title: "Kuyudan Yükselen Hayat",
-        desc: "Açılan bir su kuyusu ile yerin metrelerce altından yeryüzüne ilk temiz suyun bereketi müjdelenir.",
-        theme: "well"
+        start: 11.0,
+        end: 19.0,
+        phase: "SAHNE 03 / 05 • YETİMHANE SU KUYUSU AÇILIŞI",
+        html: 'Afganistan'da bulunan yetimhanemizde açacağımız <span class="highlight">su kuyusuyla</span> çocuklarımızı temiz suya kavuşturuyor, hayatlarını kolaylaştırıyoruz.',
+        camStart: { pos: [-14, 5.5, 16], look: [0, 2.8, 0] },
+        camEnd:   { pos: [9, 4.2, 11],   look: [0, 2.5, 0] },
+        waterLevel: 1.0,
+        fountainPower: 1.25,
+        greeneryScale: 0.95,
+        fogDensity: 0.0045,
+        skyWarmth: 0.85
       },
       {
-        duration: 8,
-        title: "Kalıcı Çözüm: İDDEF",
-        desc: "İDDEF, mazlum coğrafyalarda kalıcı su kuyuları inşa ederek susuzluğa umut olmaya devam ediyor.",
-        theme: "map"
+        start: 19.0,
+        end: 24.0,
+        phase: "SAHNE 04 / 05 • HAYATA DOKUNUŞ",
+        html: 'Siz de <span class="highlight">bir damla suyla</span> yetim yavrularımızın hayatına dokunun.',
+        camStart: { pos: [9, 4.2, 11],  look: [0, 2.5, 0] },
+        camEnd:   { pos: [0, 14, 34],   look: [0, 4, -4] },
+        waterLevel: 1.0,
+        fountainPower: 1.35,
+        greeneryScale: 1.05,
+        fogDensity: 0.004,
+        skyWarmth: 1.0
       },
       {
-        duration: 7,
-        title: "Sen de Bir Hayata Umut Ol",
-        desc: "Bir su kuyusu binlerce hayata can suyu olur. Bir kova suyla geleceği birlikte yeşertelim.",
-        theme: "cta"
+        start: 24.0,
+        end: 29.0,
+        phase: "SAHNE 05 / 05 • İDDEF İNSANİ YARDIM",
+        html: '<span class="highlight">iddef.org</span> &nbsp;|&nbsp; 0212 621 00 65',
+        camStart: { pos: [0, 14, 34],   look: [0, 4, -4] },
+        camEnd:   { pos: [0, 19, 44],   look: [0, 5, -6] },
+        waterLevel: 1.0,
+        fountainPower: 1.4,
+        greeneryScale: 1.1,
+        fogDensity: 0.0038,
+        skyWarmth: 1.0
       }
     ];
 
-    // Parçacık motoru (su damlaları, çöl tozu, ışık huzmeleri)
-    const particles = [];
-    for (let i = 0; i < 90; i++) {
-      particles.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        r: Math.random() * 4 + 1.5,
-        vx: (Math.random() - 0.5) * 1.2,
-        vy: Math.random() * 2 + 1,
-        alpha: Math.random() * 0.7 + 0.3
-      });
-    }
+    // ============================================================================
+    // 2. THREE.JS SAHNE, KAMERA, RENDERER VE IŞIKLANDIRMA KURULUMU
+    // ============================================================================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0xd99b66, 0.0075);
 
-    let currentSceneIdx = -1;
+    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 400);
+    camera.position.set(38, 12, 42);
 
-    function render(time) {
-      if (!startTime) startTime = time;
-      const elapsed = (time - startTime) / 1000;
-      const progress = Math.min(elapsed / TOTAL_DURATION, 1);
-      progressEl.style.width = (progress * 100) + '%';
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    container.appendChild(renderer.domElement);
 
-      // Aktif sahneyi hesapla
-      let accumulatedTime = 0;
-      let activeIdx = 0;
-      let sceneLocalTime = 0;
-
-      for (let i = 0; i < SCENES.length; i++) {
-        if (elapsed < accumulatedTime + SCENES[i].duration || i === SCENES.length - 1) {
-          activeIdx = i;
-          sceneLocalTime = elapsed - accumulatedTime;
-          break;
+    // Prosedürel Gökyüzü Kubbesi (Golden Hour & Afganistan Dağ Ufku)
+    const skyGeo = new THREE.SphereGeometry(220, 32, 32);
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      uniforms: {
+        topColor:    { value: new THREE.Color(0x0c2d48) },
+        middleColor: { value: new THREE.Color(0x1e6091) },
+        bottomColor: { value: new THREE.Color(0xe69f65) },
+        sunPosition: { value: new THREE.Vector3(60, 35, -90) }
+      },
+      vertexShader: `
+        varying vec3 vWorldPosition;
+        void main() {
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vWorldPosition = worldPosition.xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
-        accumulatedTime += SCENES[i].duration;
-      }
+      `,
+      fragmentShader: `
+        uniform vec3 topColor;
+        uniform vec3 middleColor;
+        uniform vec3 bottomColor;
+        uniform vec3 sunPosition;
+        varying vec3 vWorldPosition;
+        void main() {
+          vec3 dir = normalize(vWorldPosition);
+          float h = clamp(dir.y, 0.0, 1.0);
+          vec3 col = mix(bottomColor, middleColor, smoothstep(0.0, 0.28, h));
+          col = mix(col, topColor, smoothstep(0.28, 0.85, h));
 
-      // Sahne değişimi durumunda metin güncelleme
-      if (activeIdx !== currentSceneIdx) {
-        currentSceneIdx = activeIdx;
-        titleEl.style.opacity = '0';
-        descEl.style.opacity = '0';
-        setTimeout(() => {
-          titleEl.textContent = SCENES[activeIdx].title;
-          descEl.textContent = SCENES[activeIdx].desc;
-          titleEl.style.opacity = '1';
-          descEl.style.opacity = '1';
-        }, 300);
-      }
+          vec3 sunDir = normalize(sunPosition);
+          float sunAmt = max(dot(dir, sunDir), 0.0);
+          col += vec3(1.0, 0.72, 0.4) * pow(sunAmt, 18.0) * 0.65;
+          col += vec3(1.0, 0.9, 0.75) * smoothstep(0.996, 0.9998, sunAmt);
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    });
+    const skyDome = new THREE.Mesh(skyGeo, skyMat);
+    scene.add(skyDome);
 
-      ctx.clearRect(0, 0, W, H);
+    // Işıklar
+    const hemiLight = new THREE.HemisphereLight(0xfff1e0, 0x7c5836, 0.65);
+    scene.add(hemiLight);
 
-      // Sahne Çizimleri
-      switch (SCENES[activeIdx].theme) {
-        case "arid":
-          drawAridScene(sceneLocalTime);
-          break;
-        case "hope":
-          drawHopeScene(sceneLocalTime);
-          break;
-        case "well":
-          drawWellGushScene(sceneLocalTime);
-          break;
-        case "map":
-          drawImpactMapScene(sceneLocalTime);
-          break;
-        case "cta":
-          drawCtaScene(sceneLocalTime);
-          break;
-      }
+    const sunLight = new THREE.DirectionalLight(0xffdfba, 1.45);
+    sunLight.position.set(55, 42, -60);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 10;
+    sunLight.shadow.camera.far = 180;
+    const d = 55;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.bias = -0.0005;
+    scene.add(sunLight);
 
-      if (elapsed < TOTAL_DURATION) {
-        requestAnimationFrame(render);
+    // Su Kuyusu Merkez Mavi Parıltı Işığı
+    const wellGlowLight = new THREE.PointLight(0x38bdf8, 1.8, 18);
+    wellGlowLight.position.set(0, 2.5, 0);
+    scene.add(wellGlowLight);
+
+    // ============================================================================
+    // 3. ARAZİ, HİNDİKUŞ DAĞLARI VE ÇEVRE MODELLEMESİ
+    // ============================================================================
+    const groundGeo = new THREE.PlaneGeometry(320, 320, 96, 96);
+    groundGeo.rotateX(-Math.PI / 2);
+    const posAttr = groundGeo.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      const vx = posAttr.getX(i);
+      const vz = posAttr.getZ(i);
+      const dist = Math.sqrt(vx * vx + vz * vz);
+      // Kampüs merkezi düz, dışlara doğru Afganistan dağ silsilesi
+      let y = 0;
+      if (dist > 28) {
+        const factor = Math.pow((dist - 28) / 110, 1.85);
+        y = factor * 38 * (
+          0.6 +
+          0.4 * Math.sin(vx * 0.045) * Math.cos(vz * 0.045) +
+          0.25 * Math.sin(vx * 0.11 + vz * 0.08)
+        );
       } else {
-        // Döngü
-        startTime = null;
-        currentSceneIdx = -1;
-        requestAnimationFrame(render);
+        y = Math.sin(vx * 0.15) * Math.cos(vz * 0.15) * 0.08;
+      }
+      posAttr.setY(i, y);
+    }
+    groundGeo.computeVertexNormals();
+
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0xc89d6c,
+      roughness: 0.92,
+      metalness: 0.05
+    });
+    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
+
+    // Yetimhane Avlu Taş Zemini
+    const courtyardGeo = new THREE.CylinderGeometry(16, 16.5, 0.22, 48);
+    const courtyardMat = new THREE.MeshStandardMaterial({
+      color: 0xd6c7b2,
+      roughness: 0.8
+    });
+    const courtyard = new THREE.Mesh(courtyardGeo, courtyardMat);
+    courtyard.position.set(0, 0.05, 0);
+    courtyard.receiveShadow = true;
+    scene.add(courtyard);
+
+    // ============================================================================
+    // 4. AFGANİSTAN YETİMHANE KAMPÜSÜ VE SU KULESİ MİMARİSİ
+    // ============================================================================
+    const campusGroup = new THREE.Group();
+    scene.add(campusGroup);
+
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xeaddcf, roughness: 0.75 });
+    const trimMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
+    const domeMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.3, metalness: 0.2 });
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.35,
+      roughness: 0.2
+    });
+
+    // Ana Yetimhane Binası (Arka Merkez)
+    const mainBldg = new THREE.Mesh(new THREE.BoxGeometry(22, 7.5, 8), wallMat);
+    mainBldg.position.set(0, 3.75, -18);
+    mainBldg.castShadow = true;
+    mainBldg.receiveShadow = true;
+    campusGroup.add(mainBldg);
+
+    // Mavi Kurumsal Çatı Şeridi
+    const roofTrim = new THREE.Mesh(new THREE.BoxGeometry(22.4, 0.6, 8.4), trimMat);
+    roofTrim.position.set(0, 7.6, -18);
+    campusGroup.add(roofTrim);
+
+    // Giriş Kemeri ve Kubbesi
+    const entranceBlock = new THREE.Mesh(new THREE.BoxGeometry(6.5, 8.8, 3.5), wallMat);
+    entranceBlock.position.set(0, 4.4, -13.5);
+    entranceBlock.castShadow = true;
+    campusGroup.add(entranceBlock);
+
+    const mainDome = new THREE.Mesh(new THREE.SphereGeometry(2.8, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
+    mainDome.position.set(0, 8.8, -13.5);
+    mainDome.castShadow = true;
+    campusGroup.add(mainDome);
+
+    // Pencereler
+    for (let wx = -8; wx <= 8; wx += 4) {
+      if (wx === 0) continue;
+      for (let wy = 2.5; wy <= 5.5; wy += 2.6) {
+        const win = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.8, 0.2), windowMat);
+        win.position.set(wx, wy, -13.95);
+        campusGroup.add(win);
       }
     }
 
-    // 1. Sahne: Çorak Toprak & Toz Fırtınası
-    function drawAridScene(t) {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#2c1810");
-      grad.addColorStop(0.5, "#6b3e26");
-      grad.addColorStop(1, "#c27d4b");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+    // Yan Derslik Kanatları
+    [-14, 14].forEach((sideX) => {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(6, 5.5, 14), wallMat);
+      wing.position.set(sideX, 2.75, -11);
+      wing.castShadow = true;
+      wing.receiveShadow = true;
+      campusGroup.add(wing);
 
-      // Güneş
-      ctx.save();
-      const sunGrad = ctx.createRadialGradient(W / 2, H * 0.35, 10, W / 2, H * 0.35, 300);
-      sunGrad.addColorStop(0, "rgba(255, 235, 180, 0.9)");
-      sunGrad.addColorStop(0.3, "rgba(245, 158, 11, 0.4)");
-      sunGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
-      ctx.fillStyle = sunGrad;
-      ctx.beginPath();
-      ctx.arc(W / 2, H * 0.35, 300, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      const wingTrim = new THREE.Mesh(new THREE.BoxGeometry(6.3, 0.45, 14.3), trimMat);
+      wingTrim.position.set(sideX, 5.6, -11);
+      campusGroup.add(wingTrim);
+    });
 
-      // Çöl kum tepeleri
-      ctx.fillStyle = "#3b1e10";
-      ctx.beginPath();
-      ctx.moveTo(0, H * 0.72);
-      ctx.bezierCurveTo(W * 0.3, H * 0.68, W * 0.7, H * 0.78, W, H * 0.73);
-      ctx.lineTo(W, H);
-      ctx.lineTo(0, H);
-      ctx.fill();
+    // Güneş Enerjili Modern Su Kulesi (Sol Arka)
+    const towerGroup = new THREE.Group();
+    towerGroup.position.set(-13, 0, -2);
+    campusGroup.add(towerGroup);
 
-      // Sıcaklık & Toz Parçacıkları
-      ctx.fillStyle = "rgba(254, 215, 170, 0.4)";
-      particles.forEach(p => {
-        p.x += p.vx * 2;
-        p.y -= p.vy * 0.6;
-        if (p.x > W) p.x = 0;
-        if (p.y < 0) p.y = H;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 1.2, 0, Math.PI * 2);
-        ctx.fill();
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.4 });
+    [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]].forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 11, 12), legMat);
+      leg.position.set(lx, 5.5, lz);
+      leg.castShadow = true;
+      towerGroup.add(leg);
+    });
+
+    const waterTank = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.2, 2.2, 3.6, 24),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.35, metalness: 0.15 })
+    );
+    waterTank.position.set(0, 12.2, 0);
+    waterTank.castShadow = true;
+    towerGroup.add(waterTank);
+
+    const tankBand = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.25, 2.25, 0.9, 24),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
+    );
+    tankBand.position.set(0, 12.2, 0);
+    towerGroup.add(tankBand);
+
+    // Güneş Panelleri
+    const solarPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(3.8, 0.15, 2.6),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8, roughness: 0.2 })
+    );
+    solarPanel.position.set(0, 14.5, 0);
+    solarPanel.rotation.x = 0.35;
+    towerGroup.add(solarPanel);
+
+    // ============================================================================
+    // 5. MERKEZİ İDDEF SU KUYUSU, ŞADIRVAN VE GERÇEKÇİ SU EFEKTİ
+    // ============================================================================
+    const wellGroup = new THREE.Group();
+    wellGroup.position.set(0, 0.15, 0);
+    scene.add(wellGroup);
+
+    // Sekizgen Mermer Havuz Kaidesi
+    const poolOuter = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.2, 4.5, 1.2, 8),
+      new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 })
+    );
+    poolOuter.position.y = 0.6;
+    poolOuter.castShadow = true;
+    poolOuter.receiveShadow = true;
+    wellGroup.add(poolOuter);
+
+    const poolRim = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.4, 4.4, 0.22, 8),
+      trimMat
+    );
+    poolRim.position.y = 1.25;
+    wellGroup.add(poolRim);
+
+    // Dinamik Dalgalanan Su Yüzeyi
+    const waterGeo = new THREE.CircleGeometry(3.95, 32);
+    waterGeo.rotateX(-Math.PI / 2);
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x0ea5e9,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.25,
+      roughness: 0.12,
+      metalness: 0.35,
+      transparent: true,
+      opacity: 0.88
+    });
+    const waterSurface = new THREE.Mesh(waterGeo, waterMat);
+    waterSurface.position.y = 1.05;
+    wellGroup.add(waterSurface);
+
+    // Kuyu Merkez Sütunu ve Kemer Takı
+    const centerPillar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.65, 0.85, 2.6, 16),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 })
+    );
+    centerPillar.position.y = 1.6;
+    centerPillar.castShadow = true;
+    wellGroup.add(centerPillar);
+
+    // 4 Yönlü Pirinç Musluklar
+    for (let a = 0; a < 4; a++) {
+      const spout = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 0.9, 8),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.2 })
+      );
+      const angle = (a * Math.PI) / 2;
+      spout.position.set(Math.cos(angle) * 0.75, 2.2, Math.sin(angle) * 0.75);
+      spout.rotation.z = Math.cos(angle) * 1.1;
+      spout.rotation.x = Math.sin(angle) * 1.1;
+      wellGroup.add(spout);
+    }
+
+    // Kuyu Üst Kubbe Çardak (6 Sütunlu Şadırvan)
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2;
+      const col = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.22, 4.2, 12),
+        wallMat
+      );
+      col.position.set(Math.cos(ang) * 3.6, 2.8, Math.sin(ang) * 3.6);
+      col.castShadow = true;
+      wellGroup.add(col);
+    }
+
+    const canopyRing = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.9, 3.9, 0.45, 6),
+      trimMat
+    );
+    canopyRing.position.y = 5.0;
+    wellGroup.add(canopyRing);
+
+    const canopyDome = new THREE.Mesh(
+      new THREE.SphereGeometry(2.6, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      domeMat
+    );
+    canopyDome.position.y = 5.2;
+    canopyDome.castShadow = true;
+    wellGroup.add(canopyDome);
+
+    // İDDEF Su Kuyusu Kitabesi (Tabela)
+    const signBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(2.8, 0.75, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 })
+    );
+    signBoard.position.set(0, 5.05, 3.45);
+    wellGroup.add(signBoard);
+
+    // ============================================================================
+    // 6. SU FIŞKIRMA PARÇACIK SİSTEMİ (3D FOUNTAIN & DROPLETS)
+    // ============================================================================
+    const DROP_COUNT = 550;
+    const dropPositions = new Float32Array(DROP_COUNT * 3);
+    const dropVelocities = [];
+
+    for (let i = 0; i < DROP_COUNT; i++) {
+      const jetIndex = i % 5; // 4 yan musluk + 1 tepe fıskiye
+      dropPositions[i * 3] = 0;
+      dropPositions[i * 3 + 1] = 2.2;
+      dropPositions[i * 3 + 2] = 0;
+
+      const angle = jetIndex === 4 ? Math.random() * Math.PI * 2 : (jetIndex * Math.PI) / 2 + (Math.random() - 0.5) * 0.35;
+      const speed = jetIndex === 4 ? 0.6 + Math.random() * 0.7 : 1.4 + Math.random() * 0.8;
+      dropVelocities.push({
+        vx: Math.cos(angle) * speed,
+        vy: jetIndex === 4 ? 3.2 + Math.random() * 1.8 : 1.2 + Math.random() * 1.1,
+        vz: Math.sin(angle) * speed,
+        phase: Math.random() * 10
       });
     }
 
-    // 2. Sahne: Umut & Su Damlası Yansıması
-    function drawHopeScene(t) {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#082f49");
-      grad.addColorStop(0.5, "#0284c7");
-      grad.addColorStop(1, "#38bdf8");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+    const dropGeo = new THREE.BufferGeometry();
+    dropGeo.setAttribute('position', new THREE.BufferAttribute(dropPositions, 3));
 
-      // Işık huzmeleri (Tanrı ışıkları)
-      ctx.save();
-      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(W / 2 + Math.sin(t + i) * 60, 0);
-        ctx.lineTo(-200 + i * 280, H);
-        ctx.lineTo(-100 + i * 280, H);
-        ctx.fill();
-      }
-      ctx.restore();
+    const dropMat = new THREE.PointsMaterial({
+      color: 0xe0f2fe,
+      size: 0.24,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending
+    });
 
-      // Ortada parlayan büyük damla motifi
-      const dropY = H * 0.46 + Math.sin(t * 2) * 15;
-      const dropGrad = ctx.createRadialGradient(W / 2, dropY, 5, W / 2, dropY, 110);
-      dropGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
-      dropGrad.addColorStop(0.5, "rgba(56, 189, 248, 0.8)");
-      dropGrad.addColorStop(1, "rgba(2, 132, 199, 0)");
+    const waterParticles = new THREE.Points(dropGeo, dropMat);
+    wellGroup.add(waterParticles);
 
-      ctx.fillStyle = dropGrad;
-      ctx.beginPath();
-      ctx.arc(W / 2, dropY, 110, 0, Math.PI * 2);
-      ctx.fill();
+    // ============================================================================
+    // 7. HAREKETLİ AKADEMİ ÖĞRENCİLERİ, ARAÇ TRAFİĞİ VE YEŞEREN AĞAÇLAR
+    // ============================================================================
+    // Yeşeren Ağaçlar (Su kuyusu açıldıkça büyüyen bahçe)
+    const trees = [];
+    const treeCoords = [
+      [-9, 6], [9, 6], [-11, -3], [11, -3], [-7, 11], [7, 11],
+      [-14, 9], [14, 9], [-5, -9], [5, -9], [-16, 2], [16, 2]
+    ];
 
-      // Su halkası dalgaları
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
-      ctx.lineWidth = 3;
-      const rippleRadius = (t * 60) % 220;
-      ctx.beginPath();
-      ctx.arc(W / 2, H * 0.65, rippleRadius, 0, Math.PI * 2);
-      ctx.stroke();
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+    const foliageMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.65 });
+
+    treeCoords.forEach(([tx, tz]) => {
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.35, 2.2, 8), trunkMat);
+      trunk.position.y = 1.1;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const crown1 = new THREE.Mesh(new THREE.SphereGeometry(1.45, 12, 12), foliageMat);
+      crown1.position.y = 2.8;
+      crown1.castShadow = true;
+      tree.add(crown1);
+
+      const crown2 = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 12), foliageMat);
+      crown2.position.set(0.6, 3.5, 0.3);
+      tree.add(crown2);
+
+      tree.position.set(tx, 0, tz);
+      scene.add(tree);
+      trees.push(tree);
+    });
+
+    // Kuyu Etrafında Hareket Eden Yetimhane Öğrencileri (Stilize Figürler)
+    const childrenModels = [];
+    const outfitColors = [0x0284c7, 0x0ea5e9, 0xf59e0b, 0x10b981, 0x6366f1, 0xec4899, 0x14b8a6, 0xf97316];
+
+    for (let c = 0; c < 10; c++) {
+      const child = new THREE.Group();
+
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.3, 0.95, 12),
+        new THREE.MeshStandardMaterial({ color: outfitColors[c % outfitColors.length], roughness: 0.6 })
+      );
+      body.position.y = 0.6;
+      body.castShadow = true;
+      child.add(body);
+
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.24, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xf1c27d, roughness: 0.5 })
+      );
+      head.position.y = 1.32;
+      head.castShadow = true;
+      child.add(head);
+
+      // Beyaz Takke / Başörtüsü detayı
+      const cap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.245, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+      );
+      cap.position.y = 1.34;
+      child.add(cap);
+
+      const radius = 5.4 + (c % 3) * 1.6;
+      const baseAngle = (c / 10) * Math.PI * 2;
+      scene.add(child);
+      childrenModels.push({
+        mesh: child,
+        radius,
+        angle: baseAngle,
+        speed: 0.25 + (c % 4) * 0.06,
+        bobOffset: c * 1.1
+      });
     }
 
-    // 3. Sahne: Kuyunun Açılışı & Coşkulu Su Akışı
-    function drawWellGushScene(t) {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#0369a1");
-      grad.addColorStop(0.6, "#0284c7");
-      grad.addColorStop(1, "#bae6fd");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+    // Ön Yolda İlerleyen İDDEF İnsani Yardım Konvoyu Araçları
+    const vehicles = [];
+    const roadZ = 22;
 
-      // Su Kuyusu Kaidesi
-      ctx.fillStyle = "#1e293b";
-      ctx.fillRect(W * 0.35, H * 0.62, W * 0.3, H * 0.2);
-      ctx.fillStyle = "#334155";
-      ctx.fillRect(W * 0.32, H * 0.60, W * 0.36, 30);
+    // Yol Şeridi
+    const roadMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(180, 4.8),
+      new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9 })
+    );
+    roadMesh.rotation.x = -Math.PI / 2;
+    roadMesh.position.set(0, 0.08, roadZ);
+    roadMesh.receiveShadow = true;
+    scene.add(roadMesh);
 
-      // Çeşme Borusu
-      ctx.fillStyle = "#64748b";
-      ctx.fillRect(W * 0.5 - 20, H * 0.52, 40, 110);
-      ctx.fillRect(W * 0.44, H * 0.52, 70, 25);
+    for (let v = 0; v < 4; v++) {
+      const truck = new THREE.Group();
+      const cabin = new THREE.Mesh(
+        new THREE.BoxGeometry(2.6, 1.4, 1.5),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 })
+      );
+      cabin.position.y = 0.9;
+      cabin.castShadow = true;
+      truck.add(cabin);
 
-      // Fışkıran Su & Köpükler
-      ctx.fillStyle = "#ffffff";
-      for (let i = 0; i < 40; i++) {
-        const streamX = W * 0.44 - (i * 2) + (Math.sin(t * 12 + i) * 12);
-        const streamY = H * 0.53 + (i * 12);
-        ctx.beginPath();
-        ctx.arc(streamX, streamY, 9 + Math.random() * 4, 0, Math.PI * 2);
-        ctx.fill();
+      const blueStripe = new THREE.Mesh(
+        new THREE.BoxGeometry(2.65, 0.35, 1.54),
+        trimMat
+      );
+      blueStripe.position.y = 0.85;
+      truck.add(blueStripe);
+
+      truck.position.set(-60 + v * 35, 0.1, roadZ + (v % 2 === 0 ? -1.1 : 1.1));
+      scene.add(truck);
+      vehicles.push({
+        mesh: truck,
+        dir: v % 2 === 0 ? 1 : -1,
+        speed: 5.5 + (v % 2) * 1.8
+      });
+    }
+
+    // Hacimsel Rolling Fog (Süzülen Sis Katmanları)
+    const fogClouds = [];
+    const fogCloudGeo = new THREE.PlaneGeometry(36, 14);
+    const fogCloudMat = new THREE.MeshBasicMaterial({
+      color: 0xfff3e6,
+      transparent: true,
+      opacity: 0.11,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+
+    for (let f = 0; f < 14; f++) {
+      const cloud = new THREE.Mesh(fogCloudGeo, fogCloudMat);
+      cloud.position.set(
+        (Math.random() - 0.5) * 120,
+        3.5 + Math.random() * 8,
+        -35 + (Math.random() - 0.5) * 60
+      );
+      scene.add(cloud);
+      fogClouds.push({
+        mesh: cloud,
+        speed: 0.8 + Math.random() * 1.2
+      });
+    }
+
+    // ============================================================================
+    // 8. SESLENDİRME MOTORU (MP3 DOSYASI + WEB SPEECH API YEDEK DESTEĞİ)
+    // ============================================================================
+    const voAudio = document.getElementById('vo-audio');
+    const voiceoverInput = document.getElementById('voiceover-input');
+    const audioStatusText = document.getElementById('audio-status-text');
+    let customAudioLoaded = false;
+
+    voiceoverInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        voAudio.src = url;
+        customAudioLoaded = true;
+        audioStatusText.textContent = "Yüklendi: " + file.name;
       }
+    });
 
-      // Parçacıklar (Su serpintisi)
-      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-      particles.forEach(p => {
-        p.y += p.vy * 4;
-        p.x += (Math.random() - 0.5) * 5;
-        if (p.y > H * 0.85) {
-          p.y = H * 0.53;
-          p.x = W * 0.42 + (Math.random() - 0.5) * 40;
+    document.getElementById('btn-audio-upload').addEventListener('click', () => {
+      voiceoverInput.click();
+    });
+
+    // Ortamdaki su sesini Web Audio API ile gerçek zamanlı sentezleme
+    let audioCtx = null;
+    let waterGainNode = null;
+
+    function initAmbientWaterAudio() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
         }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
 
-    // 4. Sahne: Harita ve İDDEF Etkisi
-    function drawImpactMapScene(t) {
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(0, 0, W, H);
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
 
-      // Dijital Ağ & Izgara çizgileri
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.12)";
-      ctx.lineWidth = 2;
-      for (let x = 0; x < W; x += 90) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, H);
-        ctx.stroke();
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 950;
+        filter.Q.value = 0.7;
+
+        waterGainNode = audioCtx.createGain();
+        waterGainNode.gain.value = 0.04;
+
+        whiteNoise.connect(filter);
+        filter.connect(waterGainNode);
+        waterGainNode.connect(audioCtx.destination);
+        whiteNoise.start(0);
+      } catch (err) {
+        // Tarayıcı ses politikası engellerse sessiz devam et
       }
-      for (let y = 0; y < H; y += 90) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
+    }
+
+    // ============================================================================
+    // 9. ZAMAN ÇİZELGESİ, KAMERA İNTERPOLASYONU VE ANİMASYON DÖNGÜSÜ
+    // ============================================================================
+    const subtitleEl = document.getElementById('vo-subtitle');
+    const phaseLabelEl = document.getElementById('scene-phase-label');
+    const ctaBannerEl = document.getElementById('cta-banner');
+    const timelineFillEl = document.getElementById('timeline-fill');
+    const chapterBtns = document.querySelectorAll('.chapter-btn');
+
+    let isPlaying = false;
+    let startTimestamp = null;
+    let manualTimeOffset = 0;
+    let activeSceneIndex = -1;
+
+    function startPresentation(jumpToSeconds = 0) {
+      document.getElementById('start-overlay').classList.add('hidden');
+      if (!audioCtx) initAmbientWaterAudio();
+
+      manualTimeOffset = jumpToSeconds;
+      startTimestamp = performance.now();
+      isPlaying = true;
+
+      if (voAudio.src) {
+        voAudio.currentTime = jumpToSeconds;
+        voAudio.play().catch(() => {});
+      }
+    }
+
+    document.getElementById('btn-start-presentation').addEventListener('click', () => {
+      startPresentation(0);
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      startPresentation(0);
+    });
+
+    chapterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-idx'), 10);
+        if (STORY_SCENES[idx]) {
+          startPresentation(STORY_SCENES[idx].start);
+        }
+      });
+    });
+
+    // 9:16 Dikey / 16:9 Yatay Mod Değiştirici
+    const viewportWrapper = document.getElementById('viewport-wrapper');
+    const btnAspect = document.getElementById('btn-aspect');
+    btnAspect.addEventListener('click', () => {
+      viewportWrapper.classList.toggle('vertical-mode');
+      btnAspect.classList.toggle('active');
+      setTimeout(onWindowResize, 520);
+      onWindowResize();
+    });
+
+    function onWindowResize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener('resize', onWindowResize);
+
+    // Yardımcı Yumuşak Geçiş Fonksiyonu
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function smoothstep(t) {
+      return t * t * (3 - 2 * t);
+    }
+
+    let prevFrameTime = performance.now();
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+
+      const dt = Math.min((now - prevFrameTime) / 1000, 0.1);
+      prevFrameTime = now;
+
+      // Geçen Süreyi Hesapla (Ses dosyası çalıyorsa onun saatini baz al)
+      let elapsed = 0;
+      if (isPlaying) {
+        if (!voAudio.paused && !isNaN(voAudio.currentTime) && voAudio.currentTime > 0.05) {
+          elapsed = voAudio.currentTime;
+        } else {
+          elapsed = manualTimeOffset + (now - startTimestamp) / 1000;
+        }
+
+        if (elapsed >= TOTAL_DURATION) {
+          elapsed = 0;
+          manualTimeOffset = 0;
+          startTimestamp = now;
+          if (voAudio.src) {
+            voAudio.currentTime = 0;
+            voAudio.play().catch(() => {});
+          }
+        }
+      } else {
+        // Başlangıç ekranındayken yavaş panoramik dönüş
+        elapsed = (now * 0.0004) % 5.0;
       }
 
-      // Temsili Kuyu Noktaları (Afrika & Asya Etki Ağı)
-      const points = [
-        { x: W * 0.45, y: H * 0.45, label: "Çad" },
-        { x: W * 0.55, y: H * 0.52, label: "Somali" },
-        { x: W * 0.38, y: H * 0.48, label: "Nijer" },
-        { x: W * 0.65, y: H * 0.40, label: "Afganistan" },
-        { x: W * 0.72, y: H * 0.46, label: "Bangladeş" }
-      ];
+      // İlerleme çubuğu güncellemesi
+      const totalProgress = Math.min(elapsed / TOTAL_DURATION, 1);
+      timelineFillEl.style.width = (totalProgress * 100).toFixed(2) + '%';
 
-      points.forEach((pt, idx) => {
-        const pulse = (Math.sin(t * 3 + idx) + 1) * 20;
+      // Aktif Sahneyi Bul
+      let sIdx = STORY_SCENES.findIndex(s => elapsed >= s.start && elapsed < s.end);
+      if (sIdx === -1) sIdx = STORY_SCENES.length - 1;
+      const sceneData = STORY_SCENES[sIdx];
+      const localT = smoothstep(Math.min(Math.max((elapsed - sceneData.start) / (sceneData.end - sceneData.start), 0), 1));
 
-        // Nabız Halkası
-        ctx.strokeStyle = "rgba(14, 165, 233, 0.6)";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 18 + pulse, 0, Math.PI * 2);
-        ctx.stroke();
+      // Sahne Değiştiğinde Altyazı ve Bölüm Butonlarını Güncelle
+      if (sIdx !== activeSceneIndex) {
+        activeSceneIndex = sIdx;
+        phaseLabelEl.textContent = sceneData.phase;
+        subtitleEl.style.opacity = '0';
+        subtitleEl.style.transform = 'translateY(6px)';
 
-        // Merkez Nokta
-        ctx.fillStyle = "#38bdf8";
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
-        ctx.fill();
+        setTimeout(() => {
+          subtitleEl.innerHTML = sceneData.html;
+          subtitleEl.style.opacity = '1';
+          subtitleEl.style.transform = 'translateY(0)';
+        }, 180);
 
-        // Nokta Etiketi
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 24px sans-serif";
-        ctx.fillText(pt.label, pt.x + 22, pt.y + 8);
+        if (sIdx === 4) {
+          ctaBannerEl.classList.add('visible');
+        } else {
+          ctaBannerEl.classList.remove('visible');
+        }
+
+        chapterBtns.forEach((b, i) => {
+          b.classList.toggle('active', i === sIdx);
+        });
+      }
+
+      // Kamera Pozisyonu ve Odak Noktası İnterpolasyonu
+      const camX = lerp(sceneData.camStart.pos[0], sceneData.camEnd.pos[0], localT);
+      const camY = lerp(sceneData.camStart.pos[1], sceneData.camEnd.pos[1], localT);
+      const camZ = lerp(sceneData.camStart.pos[2], sceneData.camEnd.pos[2], localT);
+      camera.position.set(camX, camY, camZ);
+
+      const lookX = lerp(sceneData.camStart.look[0], sceneData.camEnd.look[0], localT);
+      const lookY = lerp(sceneData.camStart.look[1], sceneData.camEnd.look[1], localT);
+      const lookZ = lerp(sceneData.camStart.look[2], sceneData.camEnd.look[2], localT);
+      camera.lookAt(lookX, lookY, lookZ);
+
+      // Sis Yoğunluğu ve Su Sesi Seviyesi
+      scene.fog.density = lerp(scene.fog.density, sceneData.fogDensity, dt * 2);
+      if (waterGainNode && isPlaying) {
+        waterGainNode.gain.value = 0.025 * sceneData.fountainPower;
+      }
+
+      // Su Kuyusu Fıskiye Parçacıkları Fiziği
+      const positions = dropGeo.attributes.position.array;
+      const power = sceneData.fountainPower;
+
+      for (let i = 0; i < DROP_COUNT; i++) {
+        const vel = dropVelocities[i];
+        vel.phase += dt * 2.4 * power;
+
+        const tCycle = (vel.phase % 1.6);
+        positions[i * 3]     = vel.vx * tCycle * power;
+        positions[i * 3 + 1] = 2.1 + (vel.vy * power * tCycle) - (0.5 * 6.8 * tCycle * tCycle);
+        positions[i * 3 + 2] = vel.vz * tCycle * power;
+
+        if (positions[i * 3 + 1] < 1.05) {
+          positions[i * 3 + 1] = 1.05;
+        }
+      }
+      dropGeo.attributes.position.needsUpdate = true;
+
+      // Havuz Su Seviyesi ve Parıltısı
+      waterSurface.position.y = 0.55 + sceneData.waterLevel * 0.52 + Math.sin(now * 0.004) * 0.02;
+      wellGlowLight.intensity = 1.1 + Math.sin(now * 0.005) * 0.4 + sceneData.fountainPower * 0.6;
+
+      // Ağaçların Yeşermesi ve Büyümesi
+      trees.forEach((tr, idx) => {
+        const targetScale = sceneData.greeneryScale + Math.sin(now * 0.002 + idx) * 0.03;
+        tr.scale.setScalar(lerp(tr.scale.x, targetScale, dt * 2.5));
       });
+
+      // Yetimhane Öğrencilerinin Kuyu Etrafındaki Neşeli Hareketi
+      childrenModels.forEach((ch) => {
+        ch.angle += dt * ch.speed;
+        const cx = Math.cos(ch.angle) * ch.radius;
+        const cz = Math.sin(ch.angle) * ch.radius;
+        ch.mesh.position.set(cx, Math.abs(Math.sin(now * 0.006 + ch.bobOffset)) * 0.18, cz);
+        ch.mesh.lookAt(0, 1.2, 0);
+      });
+
+      // Ön Yoldaki İDDEF Yardım Araçları Trafiği
+      vehicles.forEach((v) => {
+        v.mesh.position.x += v.dir * v.speed * dt;
+        if (v.dir > 0 && v.mesh.position.x > 85) v.mesh.position.x = -85;
+        if (v.dir < 0 && v.mesh.position.x < -85) v.mesh.position.x = 85;
+      });
+
+      // Rolling Fog (Süzülen Sis Katmanları)
+      fogClouds.forEach((fc) => {
+        fc.mesh.position.x += fc.speed * dt;
+        if (fc.mesh.position.x > 70) fc.mesh.position.x = -70;
+        fc.mesh.lookAt(camera.position);
+      });
+
+      renderer.render(scene, camera);
     }
 
-    // 5. Sahne: Güçlü Çağrı (Call to Action)
-    function drawCtaScene(t) {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#0c4a6e");
-      grad.addColorStop(0.7, "#0369a1");
-      grad.addColorStop(1, "#0284c7");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Arka plan parıltısı
-      const glowGrad = ctx.createRadialGradient(W / 2, H * 0.45, 10, W / 2, H * 0.45, 340);
-      glowGrad.addColorStop(0, "rgba(255, 255, 255, 0.25)");
-      glowGrad.addColorStop(1, "rgba(2, 132, 199, 0)");
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(W / 2, H * 0.45, 340, 0, Math.PI * 2);
-      ctx.fill();
-
-      // İDDEF Vurgu Rozeti
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "900 68px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("İ D D E F", W / 2, H * 0.43);
-
-      ctx.fillStyle = "#bae6fd";
-      ctx.font = "500 32px sans-serif";
-      ctx.fillText("Su Kuyusu Çalışmaları", W / 2, H * 0.47);
-
-      // Yükselen Su Habecikleri
-      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-      particles.forEach(p => {
-        p.y -= p.vy * 2.5;
-        if (p.y < 0) p.y = H;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 1.8, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
-    // Başlat
-    requestAnimationFrame(render);
+    requestAnimationFrame(animate);
   </script>
 </body>
 </html>
