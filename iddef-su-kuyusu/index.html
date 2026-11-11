@@ -1,1419 +1,463 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>İDDEF | Afganistan Yetimhane Su Kuyusu Projesi - 3D Sinematik Sunum</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #0284c7;
-      --primary-light: #38bdf8;
-      --gold: #f59e0b;
-      --dark: #070b14;
-      --glass: rgba(10, 18, 32, 0.72);
-      --glass-border: rgba(255, 255, 255, 0.14);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-    }
-
-    body {
-      background-color: #03060c;
-      color: #ffffff;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow: hidden;
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* 16:9 / 9:16 Değiştirilebilir Sinematik Sahne Çerçevesi */
-    #viewport-wrapper {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: #000;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    #viewport-wrapper.vertical-mode {
-      width: 56.25vh;
-      height: 100vh;
-      max-width: 100vw;
-      border-left: 1px solid rgba(255,255,255,0.12);
-      border-right: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 0 90px rgba(0, 0, 0, 0.95);
-    }
-
-    #canvas-container {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-
-    /* Sinematik Vignette ve Film Grain Katmanı */
-    .cinematic-fx {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 2;
-      background:
-        radial-gradient(circle at center, transparent 45%, rgba(4, 9, 20, 0.65) 100%),
-        linear-gradient(180deg, rgba(4, 10, 22, 0.75) 0%, transparent 22%, transparent 62%, rgba(4, 10, 22, 0.92) 100%);
-    }
-
-    /* Üst Kurumsal Bar */
-    .hud-header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 28px 36px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-      pointer-events: none;
-    }
-
-    .brand-lockup {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: var(--glass);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      padding: 10px 20px;
-      border-radius: 100px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-      pointer-events: auto;
-    }
-
-    .brand-badge {
-      background: linear-gradient(135deg, #0ea5e9, #0369a1);
-      color: #fff;
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: 2px;
-      padding: 6px 14px;
-      border-radius: 50px;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-    }
-
-    .brand-meta {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand-location {
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.4px;
-      color: var(--primary-light);
-    }
-
-    .brand-sub {
-      font-size: 0.72rem;
-      color: rgba(255, 255, 255, 0.72);
-      font-weight: 500;
-    }
-
-    .hud-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      pointer-events: auto;
-    }
-
-    .btn-glass {
-      background: var(--glass);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 100px;
-      font-family: inherit;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.25s ease;
-    }
-
-    .btn-glass:hover {
-      background: rgba(14, 165, 233, 0.28);
-      border-color: rgba(56, 189, 248, 0.5);
-      transform: translateY(-1px);
-    }
-
-    .btn-glass.active {
-      background: linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(2, 132, 199, 0.85));
-      border-color: #7dd3fc;
-    }
-
-    /* Alt Altyazı ve Hikaye Alanı */
-    .story-stage {
-      position: absolute;
-      bottom: 84px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(880px, 90%);
-      z-index: 10;
-      text-align: center;
-      pointer-events: none;
-    }
-
-    .scene-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(14, 165, 233, 0.18);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      color: #bae6fd;
-      padding: 6px 16px;
-      border-radius: 100px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-      backdrop-filter: blur(8px);
-      transition: all 0.5s ease;
-    }
-
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #38bdf8;
-      box-shadow: 0 0 10px #38bdf8;
-      animation: pulse 1.8s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.5); opacity: 0.45; }
-    }
-
-    .subtitle-card {
-      background: rgba(7, 13, 25, 0.76);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 26px 34px;
-      border-radius: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
-      transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .vo-quote {
-      font-size: clamp(1.15rem, 2.2vw, 1.65rem);
-      font-weight: 700;
-      line-height: 1.45;
-      color: #ffffff;
-      letter-spacing: -0.01em;
-      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-
-    .vo-quote .highlight {
-      color: #38bdf8;
-      font-family: 'Playfair Display', Georgia, serif;
-      font-style: italic;
-      font-weight: 700;
-      padding: 0 4px;
-    }
-
-    /* Final CTA Kartı (5. Sahne) */
-    .cta-banner {
-      margin-top: 18px;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-      pointer-events: auto;
-      animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .cta-banner.visible {
-      display: flex;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .cta-item {
-      background: linear-gradient(135deg, #0284c7, #0369a1);
-      border: 1px solid rgba(125, 211, 252, 0.5);
-      padding: 12px 26px;
-      border-radius: 100px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      font-size: 1.15rem;
-      letter-spacing: 0.5px;
-      color: #fff;
-      text-decoration: none;
-      box-shadow: 0 10px 30px rgba(2, 132, 199, 0.5);
-    }
-
-    .cta-phone {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 12px 26px;
-      border-radius: 100px;
-      font-weight: 800;
-      font-size: 1.15rem;
-      letter-spacing: 1px;
-      color: #bae6fd;
-    }
-
-    /* Alt Zaman Çizelgesi ve Sahne Seçici */
-    .timeline-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 68px;
-      background: linear-gradient(180deg, transparent, rgba(3, 7, 15, 0.96));
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 0 36px 18px 36px;
-      z-index: 12;
-    }
-
-    .scene-chapters {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .chapter-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.65);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.2s ease;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .chapter-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      color: #fff;
-    }
-
-    .chapter-btn.active {
-      background: rgba(14, 165, 233, 0.28);
-      border-color: #38bdf8;
-      color: #fff;
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #38bdf8, #0284c7, #f59e0b);
-      border-radius: 10px;
-      transition: width 0.1s linear;
-    }
-
-    /* Başlangıç Kapak Katmanı (Ses Senkronizasyonu İçin) */
-    #start-overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 50;
-      background: radial-gradient(circle at center, rgba(12, 26, 48, 0.82) 0%, rgba(4, 8, 16, 0.96) 100%);
-      backdrop-filter: blur(18px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 32px;
-      text-align: center;
-      transition: opacity 0.6s ease;
-    }
-
-    #start-overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .modal-card {
-      max-width: 580px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: 28px;
-      padding: 40px 36px;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
-    }
-
-    .modal-tag {
-      display: inline-block;
-      background: rgba(14, 165, 233, 0.2);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 50px;
-      margin-bottom: 18px;
-    }
-
-    .modal-title {
-      font-size: 1.85rem;
-      font-weight: 800;
-      line-height: 1.25;
-      margin-bottom: 12px;
-      color: #fff;
-    }
-
-    .modal-desc {
-      font-size: 0.95rem;
-      color: rgba(226, 232, 240, 0.8);
-      line-height: 1.6;
-      margin-bottom: 28px;
-    }
-
-    .modal-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .btn-primary-start {
-      background: linear-gradient(135deg, #0ea5e9, #0284c7);
-      color: #fff;
-      border: none;
-      padding: 16px 28px;
-      border-radius: 16px;
-      font-size: 1.05rem;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 12px 30px rgba(14, 165, 233, 0.45);
-      transition: all 0.25s ease;
-    }
-
-    .btn-primary-start:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 16px 38px rgba(14, 165, 233, 0.65);
-    }
-
-    .audio-upload-box {
-      margin-top: 8px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px dashed rgba(255, 255, 255, 0.25);
-      background: rgba(255, 255, 255, 0.04);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.75);
-    }
-
-    .audio-upload-label {
-      color: #38bdf8;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    #voiceover-input {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .hud-header { padding: 16px; }
-      .scene-chapters { display: none; }
-      .story-stage { bottom: 48px; width: 92%; }
-      .subtitle-card { padding: 18px 20px; }
-    }
-  </style>
-</head>
-<body>
-
-  <div id="viewport-wrapper">
-    <div id="canvas-container"></div>
-    <div class="cinematic-fx"></div>
-
-    <!-- Kurumsal Üst Bar -->
-    <header class="hud-header">
-      <div class="brand-lockup">
-        <div class="brand-badge">İDDEF</div>
-        <div class="brand-meta">
-          <span class="brand-location">AFGANİSTAN YETİMHANESİ</span>
-          <span class="brand-sub">Su Kuyusu & Yaşam Kampüsü Projesi</span>
-        </div>
-      </div>
-
-      <div class="hud-controls">
-        <button class="btn-glass" id="btn-aspect" title="9:16 Dikey / 16:9 Yatay Mod">
-          <span>📱 9:16 Dikey Mod</span>
-        </button>
-        <button class="btn-glass" id="btn-audio-upload" title="Seslendirme MP3/WAV Dosyası Seç">
-          <span>🎙️ Ses Dosyası Seç</span>
-        </button>
-        <button class="btn-glass" id="btn-restart" title="Baştan Oynat">
-          <span>↻ Yeniden Başlat</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Senkronize Seslendirme ve Altyazı Alanı -->
-    <main class="story-stage">
-      <div class="scene-pill">
-        <span class="pulse-dot"></span>
-        <span id="scene-phase-label">SAHNE 01 / 05 • UMUDUN FİLİZLENİŞİ</span>
-      </div>
-
-      <div class="subtitle-card">
-        <p class="vo-quote" id="vo-subtitle">
-          Bir çocuk için <span class="highlight">su;</span> sağlık, temizlik ve daha güzel bir gelecek demek.
-        </p>
-
-        <div class="cta-banner" id="cta-banner">
-          <a href="https://www.iddef.org" target="_blank" class="cta-item">🌐 iddef.org</a>
-          <div class="cta-phone">📞 0212 621 00 65</div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Alt Zaman Çizelgesi -->
-    <footer class="timeline-bar">
-      <div class="scene-chapters" id="chapter-list">
-        <button class="chapter-btn active" data-idx="0">01. Çocuk & Gelecek (00:00)</button>
-        <button class="chapter-btn" data-idx="1">02. Bir Damla Umut (00:05)</button>
-        <button class="chapter-btn" data-idx="2">03. Yetimhane Su Kuyusu (00:11)</button>
-        <button class="chapter-btn" data-idx="3">04. Hayata Dokunuş (00:19)</button>
-        <button class="chapter-btn" data-idx="4">05. İDDEF İletişim (00:24)</button>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="timeline-fill"></div>
-      </div>
-    </footer>
-
-    <!-- Yönetim Sunumu Başlangıç Ekranı -->
-    <div id="start-overlay">
-      <div class="modal-card">
-        <span class="modal-tag">KURUL & YÖNETİM ONAY SUNUMU • THREE.JS WebGL</span>
-        <h1 class="modal-title">Afganistan Yetimhanesi<br>Su Kuyusu Projesi</h1>
-        <p class="modal-desc">
-          Gerçek zamanlı 3D mimari simülasyon, hacimsel sis (rolling fog), dinamik su fiziği, güneş enerjili su kulesi ve seslendirme metniyle saniye saniye senkronize sinematik kamera akışı.
-        </p>
-
-        <div class="modal-actions">
-          <button class="btn-primary-start" id="btn-start-presentation">
-            <span>▶ Sunumu ve Animasyonu Başlat (29 Sn)</span>
-          </button>
-
-          <div class="audio-upload-box">
-            <span id="audio-status-text">Varsayılan: Web-Audio + Ses Dosyası (`seslendirme.mp3`)</span>
-            <label for="voiceover-input" class="audio-upload-label">Ses Dosyası Yükle</label>
-            <input type="file" id="voiceover-input" accept="audio/*">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Varsayılan olarak aynı klasördeki seslendirme.mp3 dosyasını da otomatik dener -->
-  <audio id="vo-audio" src="seslendirme.mp3" preload="auto"></audio>
-
-  <!-- Three.js r128 CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <script>
-    // ============================================================================
-    // 1. SESLENDİRME METNİ VE SANİYE SANİYE SENKRONİZE SAHNE AKIŞI (29 SANİYE)
-    // ============================================================================
-    const TOTAL_DURATION = 29.0;
-
-    const STORY_SCENES = [
-      {
-        start: 0.0,
-        end: 5.2,
-        phase: "SAHNE 01 / 05 • UMUDUN FİLİZLENİŞİ",
-        html: 'Bir çocuk için <span class="highlight">su;</span> sağlık, temizlik ve daha güzel bir gelecek demek.',
-        camStart: { pos: [38, 12, 42], look: [0, 3, 0] },
-        camEnd:   { pos: [24, 9, 28],  look: [0, 3.5, 0] },
-        waterLevel: 0.25,
-        fountainPower: 0.3,
-        greeneryScale: 0.25,
-        fogDensity: 0.0085,
-        skyWarmth: 0.2
-      },
-      {
-        start: 5.2,
-        end: 11.0,
-        phase: "SAHNE 02 / 05 • AFGANİSTAN'DA BİR DAMLA UMUT",
-        html: 'Afganistan’da yetim yavrularımızın hayatına <span class="highlight">bir damla ile</span> umut oluyoruz.',
-        camStart: { pos: [24, 9, 28],  look: [0, 3.5, 0] },
-        camEnd:   { pos: [-16, 7.5, 22], look: [-2, 4, -4] },
-        waterLevel: 0.55,
-        fountainPower: 0.65,
-        greeneryScale: 0.55,
-        fogDensity: 0.0065,
-        skyWarmth: 0.5
-      },
-      {
-        start: 11.0,
-        end: 19.0,
-        phase: "SAHNE 03 / 05 • YETİMHANE SU KUYUSU AÇILIŞI",
-        html: 'Afganistan'da bulunan yetimhanemizde açacağımız <span class="highlight">su kuyusuyla</span> çocuklarımızı temiz suya kavuşturuyor, hayatlarını kolaylaştırıyoruz.',
-        camStart: { pos: [-14, 5.5, 16], look: [0, 2.8, 0] },
-        camEnd:   { pos: [9, 4.2, 11],   look: [0, 2.5, 0] },
-        waterLevel: 1.0,
-        fountainPower: 1.25,
-        greeneryScale: 0.95,
-        fogDensity: 0.0045,
-        skyWarmth: 0.85
-      },
-      {
-        start: 19.0,
-        end: 24.0,
-        phase: "SAHNE 04 / 05 • HAYATA DOKUNUŞ",
-        html: 'Siz de <span class="highlight">bir damla suyla</span> yetim yavrularımızın hayatına dokunun.',
-        camStart: { pos: [9, 4.2, 11],  look: [0, 2.5, 0] },
-        camEnd:   { pos: [0, 14, 34],   look: [0, 4, -4] },
-        waterLevel: 1.0,
-        fountainPower: 1.35,
-        greeneryScale: 1.05,
-        fogDensity: 0.004,
-        skyWarmth: 1.0
-      },
-      {
-        start: 24.0,
-        end: 29.0,
-        phase: "SAHNE 05 / 05 • İDDEF İNSANİ YARDIM",
-        html: '<span class="highlight">iddef.org</span> &nbsp;|&nbsp; 0212 621 00 65',
-        camStart: { pos: [0, 14, 34],   look: [0, 4, -4] },
-        camEnd:   { pos: [0, 19, 44],   look: [0, 5, -6] },
-        waterLevel: 1.0,
-        fountainPower: 1.4,
-        greeneryScale: 1.1,
-        fogDensity: 0.0038,
-        skyWarmth: 1.0
-      }
-    ];
-
-    // ============================================================================
-    // 2. THREE.JS SAHNE, KAMERA, RENDERER VE IŞIKLANDIRMA KURULUMU
-    // ============================================================================
-    const container = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xd99b66, 0.0075);
-
-    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 400);
-    camera.position.set(38, 12, 42);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
-    container.appendChild(renderer.domElement);
-
-    // Prosedürel Gökyüzü Kubbesi (Golden Hour & Afganistan Dağ Ufku)
-    const skyGeo = new THREE.SphereGeometry(220, 32, 32);
-    const skyMat = new THREE.ShaderMaterial({
-      side: THREE.BackSide,
-      uniforms: {
-        topColor:    { value: new THREE.Color(0x0c2d48) },
-        middleColor: { value: new THREE.Color(0x1e6091) },
-        bottomColor: { value: new THREE.Color(0xe69f65) },
-        sunPosition: { value: new THREE.Vector3(60, 35, -90) }
-      },
-      vertexShader: `
-        varying vec3 vWorldPosition;
-        void main() {
-          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-          vWorldPosition = worldPosition.xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 topColor;
-        uniform vec3 middleColor;
-        uniform vec3 bottomColor;
-        uniform vec3 sunPosition;
-        varying vec3 vWorldPosition;
-        void main() {
-          vec3 dir = normalize(vWorldPosition);
-          float h = clamp(dir.y, 0.0, 1.0);
-          vec3 col = mix(bottomColor, middleColor, smoothstep(0.0, 0.28, h));
-          col = mix(col, topColor, smoothstep(0.28, 0.85, h));
-
-          vec3 sunDir = normalize(sunPosition);
-          float sunAmt = max(dot(dir, sunDir), 0.0);
-          col += vec3(1.0, 0.72, 0.4) * pow(sunAmt, 18.0) * 0.65;
-          col += vec3(1.0, 0.9, 0.75) * smoothstep(0.996, 0.9998, sunAmt);
-          gl_FragColor = vec4(col, 1.0);
-        }
-      `
-    });
-    const skyDome = new THREE.Mesh(skyGeo, skyMat);
-    scene.add(skyDome);
-
-    // Işıklar
-    const hemiLight = new THREE.HemisphereLight(0xfff1e0, 0x7c5836, 0.65);
-    scene.add(hemiLight);
-
-    const sunLight = new THREE.DirectionalLight(0xffdfba, 1.45);
-    sunLight.position.set(55, 42, -60);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
-    sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 180;
-    const d = 55;
-    sunLight.shadow.camera.left = -d;
-    sunLight.shadow.camera.right = d;
-    sunLight.shadow.camera.top = d;
-    sunLight.shadow.camera.bottom = -d;
-    sunLight.shadow.bias = -0.0005;
-    scene.add(sunLight);
-
-    // Su Kuyusu Merkez Mavi Parıltı Işığı
-    const wellGlowLight = new THREE.PointLight(0x38bdf8, 1.8, 18);
-    wellGlowLight.position.set(0, 2.5, 0);
-    scene.add(wellGlowLight);
-
-    // ============================================================================
-    // 3. ARAZİ, HİNDİKUŞ DAĞLARI VE ÇEVRE MODELLEMESİ
-    // ============================================================================
-    const groundGeo = new THREE.PlaneGeometry(320, 320, 96, 96);
-    groundGeo.rotateX(-Math.PI / 2);
-    const posAttr = groundGeo.attributes.position;
-    for (let i = 0; i < posAttr.count; i++) {
-      const vx = posAttr.getX(i);
-      const vz = posAttr.getZ(i);
-      const dist = Math.sqrt(vx * vx + vz * vz);
-      // Kampüs merkezi düz, dışlara doğru Afganistan dağ silsilesi
-      let y = 0;
-      if (dist > 28) {
-        const factor = Math.pow((dist - 28) / 110, 1.85);
-        y = factor * 38 * (
-          0.6 +
-          0.4 * Math.sin(vx * 0.045) * Math.cos(vz * 0.045) +
-          0.25 * Math.sin(vx * 0.11 + vz * 0.08)
-        );
-      } else {
-        y = Math.sin(vx * 0.15) * Math.cos(vz * 0.15) * 0.08;
-      }
-      posAttr.setY(i, y);
-    }
-    groundGeo.computeVertexNormals();
-
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0xc89d6c,
-      roughness: 0.92,
-      metalness: 0.05
-    });
-    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
-    groundMesh.receiveShadow = true;
-    scene.add(groundMesh);
-
-    // Yetimhane Avlu Taş Zemini
-    const courtyardGeo = new THREE.CylinderGeometry(16, 16.5, 0.22, 48);
-    const courtyardMat = new THREE.MeshStandardMaterial({
-      color: 0xd6c7b2,
-      roughness: 0.8
-    });
-    const courtyard = new THREE.Mesh(courtyardGeo, courtyardMat);
-    courtyard.position.set(0, 0.05, 0);
-    courtyard.receiveShadow = true;
-    scene.add(courtyard);
-
-    // ============================================================================
-    // 4. AFGANİSTAN YETİMHANE KAMPÜSÜ VE SU KULESİ MİMARİSİ
-    // ============================================================================
-    const campusGroup = new THREE.Group();
-    scene.add(campusGroup);
-
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0xeaddcf, roughness: 0.75 });
-    const trimMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
-    const domeMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.3, metalness: 0.2 });
-    const windowMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      emissive: 0xf59e0b,
-      emissiveIntensity: 0.35,
-      roughness: 0.2
-    });
-
-    // Ana Yetimhane Binası (Arka Merkez)
-    const mainBldg = new THREE.Mesh(new THREE.BoxGeometry(22, 7.5, 8), wallMat);
-    mainBldg.position.set(0, 3.75, -18);
-    mainBldg.castShadow = true;
-    mainBldg.receiveShadow = true;
-    campusGroup.add(mainBldg);
-
-    // Mavi Kurumsal Çatı Şeridi
-    const roofTrim = new THREE.Mesh(new THREE.BoxGeometry(22.4, 0.6, 8.4), trimMat);
-    roofTrim.position.set(0, 7.6, -18);
-    campusGroup.add(roofTrim);
-
-    // Giriş Kemeri ve Kubbesi
-    const entranceBlock = new THREE.Mesh(new THREE.BoxGeometry(6.5, 8.8, 3.5), wallMat);
-    entranceBlock.position.set(0, 4.4, -13.5);
-    entranceBlock.castShadow = true;
-    campusGroup.add(entranceBlock);
-
-    const mainDome = new THREE.Mesh(new THREE.SphereGeometry(2.8, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
-    mainDome.position.set(0, 8.8, -13.5);
-    mainDome.castShadow = true;
-    campusGroup.add(mainDome);
-
-    // Pencereler
-    for (let wx = -8; wx <= 8; wx += 4) {
-      if (wx === 0) continue;
-      for (let wy = 2.5; wy <= 5.5; wy += 2.6) {
-        const win = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.8, 0.2), windowMat);
-        win.position.set(wx, wy, -13.95);
-        campusGroup.add(win);
-      }
-    }
-
-    // Yan Derslik Kanatları
-    [-14, 14].forEach((sideX) => {
-      const wing = new THREE.Mesh(new THREE.BoxGeometry(6, 5.5, 14), wallMat);
-      wing.position.set(sideX, 2.75, -11);
-      wing.castShadow = true;
-      wing.receiveShadow = true;
-      campusGroup.add(wing);
-
-      const wingTrim = new THREE.Mesh(new THREE.BoxGeometry(6.3, 0.45, 14.3), trimMat);
-      wingTrim.position.set(sideX, 5.6, -11);
-      campusGroup.add(wingTrim);
-    });
-
-    // Güneş Enerjili Modern Su Kulesi (Sol Arka)
-    const towerGroup = new THREE.Group();
-    towerGroup.position.set(-13, 0, -2);
-    campusGroup.add(towerGroup);
-
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.4 });
-    [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]].forEach(([lx, lz]) => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 11, 12), legMat);
-      leg.position.set(lx, 5.5, lz);
-      leg.castShadow = true;
-      towerGroup.add(leg);
-    });
-
-    const waterTank = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.2, 2.2, 3.6, 24),
-      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.35, metalness: 0.15 })
-    );
-    waterTank.position.set(0, 12.2, 0);
-    waterTank.castShadow = true;
-    towerGroup.add(waterTank);
-
-    const tankBand = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.25, 2.25, 0.9, 24),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
-    );
-    tankBand.position.set(0, 12.2, 0);
-    towerGroup.add(tankBand);
-
-    // Güneş Panelleri
-    const solarPanel = new THREE.Mesh(
-      new THREE.BoxGeometry(3.8, 0.15, 2.6),
-      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8, roughness: 0.2 })
-    );
-    solarPanel.position.set(0, 14.5, 0);
-    solarPanel.rotation.x = 0.35;
-    towerGroup.add(solarPanel);
-
-    // ============================================================================
-    // 5. MERKEZİ İDDEF SU KUYUSU, ŞADIRVAN VE GERÇEKÇİ SU EFEKTİ
-    // ============================================================================
-    const wellGroup = new THREE.Group();
-    wellGroup.position.set(0, 0.15, 0);
-    scene.add(wellGroup);
-
-    // Sekizgen Mermer Havuz Kaidesi
-    const poolOuter = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.2, 4.5, 1.2, 8),
-      new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 })
-    );
-    poolOuter.position.y = 0.6;
-    poolOuter.castShadow = true;
-    poolOuter.receiveShadow = true;
-    wellGroup.add(poolOuter);
-
-    const poolRim = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.4, 4.4, 0.22, 8),
-      trimMat
-    );
-    poolRim.position.y = 1.25;
-    wellGroup.add(poolRim);
-
-    // Dinamik Dalgalanan Su Yüzeyi
-    const waterGeo = new THREE.CircleGeometry(3.95, 32);
-    waterGeo.rotateX(-Math.PI / 2);
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x0ea5e9,
-      emissive: 0x0284c7,
-      emissiveIntensity: 0.25,
-      roughness: 0.12,
-      metalness: 0.35,
-      transparent: true,
-      opacity: 0.88
-    });
-    const waterSurface = new THREE.Mesh(waterGeo, waterMat);
-    waterSurface.position.y = 1.05;
-    wellGroup.add(waterSurface);
-
-    // Kuyu Merkez Sütunu ve Kemer Takı
-    const centerPillar = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.65, 0.85, 2.6, 16),
-      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 })
-    );
-    centerPillar.position.y = 1.6;
-    centerPillar.castShadow = true;
-    wellGroup.add(centerPillar);
-
-    // 4 Yönlü Pirinç Musluklar
-    for (let a = 0; a < 4; a++) {
-      const spout = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 0.9, 8),
-        new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.2 })
-      );
-      const angle = (a * Math.PI) / 2;
-      spout.position.set(Math.cos(angle) * 0.75, 2.2, Math.sin(angle) * 0.75);
-      spout.rotation.z = Math.cos(angle) * 1.1;
-      spout.rotation.x = Math.sin(angle) * 1.1;
-      wellGroup.add(spout);
-    }
-
-    // Kuyu Üst Kubbe Çardak (6 Sütunlu Şadırvan)
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2;
-      const col = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.22, 4.2, 12),
-        wallMat
-      );
-      col.position.set(Math.cos(ang) * 3.6, 2.8, Math.sin(ang) * 3.6);
-      col.castShadow = true;
-      wellGroup.add(col);
-    }
-
-    const canopyRing = new THREE.Mesh(
-      new THREE.CylinderGeometry(3.9, 3.9, 0.45, 6),
-      trimMat
-    );
-    canopyRing.position.y = 5.0;
-    wellGroup.add(canopyRing);
-
-    const canopyDome = new THREE.Mesh(
-      new THREE.SphereGeometry(2.6, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      domeMat
-    );
-    canopyDome.position.y = 5.2;
-    canopyDome.castShadow = true;
-    wellGroup.add(canopyDome);
-
-    // İDDEF Su Kuyusu Kitabesi (Tabela)
-    const signBoard = new THREE.Mesh(
-      new THREE.BoxGeometry(2.8, 0.75, 0.18),
-      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 })
-    );
-    signBoard.position.set(0, 5.05, 3.45);
-    wellGroup.add(signBoard);
-
-    // ============================================================================
-    // 6. SU FIŞKIRMA PARÇACIK SİSTEMİ (3D FOUNTAIN & DROPLETS)
-    // ============================================================================
-    const DROP_COUNT = 550;
-    const dropPositions = new Float32Array(DROP_COUNT * 3);
-    const dropVelocities = [];
-
-    for (let i = 0; i < DROP_COUNT; i++) {
-      const jetIndex = i % 5; // 4 yan musluk + 1 tepe fıskiye
-      dropPositions[i * 3] = 0;
-      dropPositions[i * 3 + 1] = 2.2;
-      dropPositions[i * 3 + 2] = 0;
-
-      const angle = jetIndex === 4 ? Math.random() * Math.PI * 2 : (jetIndex * Math.PI) / 2 + (Math.random() - 0.5) * 0.35;
-      const speed = jetIndex === 4 ? 0.6 + Math.random() * 0.7 : 1.4 + Math.random() * 0.8;
-      dropVelocities.push({
-        vx: Math.cos(angle) * speed,
-        vy: jetIndex === 4 ? 3.2 + Math.random() * 1.8 : 1.2 + Math.random() * 1.1,
-        vz: Math.sin(angle) * speed,
-        phase: Math.random() * 10
-      });
-    }
-
-    const dropGeo = new THREE.BufferGeometry();
-    dropGeo.setAttribute('position', new THREE.BufferAttribute(dropPositions, 3));
-
-    const dropMat = new THREE.PointsMaterial({
-      color: 0xe0f2fe,
-      size: 0.24,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending
-    });
-
-    const waterParticles = new THREE.Points(dropGeo, dropMat);
-    wellGroup.add(waterParticles);
-
-    // ============================================================================
-    // 7. HAREKETLİ AKADEMİ ÖĞRENCİLERİ, ARAÇ TRAFİĞİ VE YEŞEREN AĞAÇLAR
-    // ============================================================================
-    // Yeşeren Ağaçlar (Su kuyusu açıldıkça büyüyen bahçe)
-    const trees = [];
-    const treeCoords = [
-      [-9, 6], [9, 6], [-11, -3], [11, -3], [-7, 11], [7, 11],
-      [-14, 9], [14, 9], [-5, -9], [5, -9], [-16, 2], [16, 2]
-    ];
-
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
-    const foliageMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.65 });
-
-    treeCoords.forEach(([tx, tz]) => {
-      const tree = new THREE.Group();
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.35, 2.2, 8), trunkMat);
-      trunk.position.y = 1.1;
-      trunk.castShadow = true;
-      tree.add(trunk);
-
-      const crown1 = new THREE.Mesh(new THREE.SphereGeometry(1.45, 12, 12), foliageMat);
-      crown1.position.y = 2.8;
-      crown1.castShadow = true;
-      tree.add(crown1);
-
-      const crown2 = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 12), foliageMat);
-      crown2.position.set(0.6, 3.5, 0.3);
-      tree.add(crown2);
-
-      tree.position.set(tx, 0, tz);
-      scene.add(tree);
-      trees.push(tree);
-    });
-
-    // Kuyu Etrafında Hareket Eden Yetimhane Öğrencileri (Stilize Figürler)
-    const childrenModels = [];
-    const outfitColors = [0x0284c7, 0x0ea5e9, 0xf59e0b, 0x10b981, 0x6366f1, 0xec4899, 0x14b8a6, 0xf97316];
-
-    for (let c = 0; c < 10; c++) {
-      const child = new THREE.Group();
-
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.24, 0.3, 0.95, 12),
-        new THREE.MeshStandardMaterial({ color: outfitColors[c % outfitColors.length], roughness: 0.6 })
-      );
-      body.position.y = 0.6;
-      body.castShadow = true;
-      child.add(body);
-
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.24, 12, 12),
-        new THREE.MeshStandardMaterial({ color: 0xf1c27d, roughness: 0.5 })
-      );
-      head.position.y = 1.32;
-      head.castShadow = true;
-      child.add(head);
-
-      // Beyaz Takke / Başörtüsü detayı
-      const cap = new THREE.Mesh(
-        new THREE.SphereGeometry(0.245, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
-        new THREE.MeshStandardMaterial({ color: 0xffffff })
-      );
-      cap.position.y = 1.34;
-      child.add(cap);
-
-      const radius = 5.4 + (c % 3) * 1.6;
-      const baseAngle = (c / 10) * Math.PI * 2;
-      scene.add(child);
-      childrenModels.push({
-        mesh: child,
-        radius,
-        angle: baseAngle,
-        speed: 0.25 + (c % 4) * 0.06,
-        bobOffset: c * 1.1
-      });
-    }
-
-    // Ön Yolda İlerleyen İDDEF İnsani Yardım Konvoyu Araçları
-    const vehicles = [];
-    const roadZ = 22;
-
-    // Yol Şeridi
-    const roadMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(180, 4.8),
-      new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9 })
-    );
-    roadMesh.rotation.x = -Math.PI / 2;
-    roadMesh.position.set(0, 0.08, roadZ);
-    roadMesh.receiveShadow = true;
-    scene.add(roadMesh);
-
-    for (let v = 0; v < 4; v++) {
-      const truck = new THREE.Group();
-      const cabin = new THREE.Mesh(
-        new THREE.BoxGeometry(2.6, 1.4, 1.5),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 })
-      );
-      cabin.position.y = 0.9;
-      cabin.castShadow = true;
-      truck.add(cabin);
-
-      const blueStripe = new THREE.Mesh(
-        new THREE.BoxGeometry(2.65, 0.35, 1.54),
-        trimMat
-      );
-      blueStripe.position.y = 0.85;
-      truck.add(blueStripe);
-
-      truck.position.set(-60 + v * 35, 0.1, roadZ + (v % 2 === 0 ? -1.1 : 1.1));
-      scene.add(truck);
-      vehicles.push({
-        mesh: truck,
-        dir: v % 2 === 0 ? 1 : -1,
-        speed: 5.5 + (v % 2) * 1.8
-      });
-    }
-
-    // Hacimsel Rolling Fog (Süzülen Sis Katmanları)
-    const fogClouds = [];
-    const fogCloudGeo = new THREE.PlaneGeometry(36, 14);
-    const fogCloudMat = new THREE.MeshBasicMaterial({
-      color: 0xfff3e6,
-      transparent: true,
-      opacity: 0.11,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    });
-
-    for (let f = 0; f < 14; f++) {
-      const cloud = new THREE.Mesh(fogCloudGeo, fogCloudMat);
-      cloud.position.set(
-        (Math.random() - 0.5) * 120,
-        3.5 + Math.random() * 8,
-        -35 + (Math.random() - 0.5) * 60
-      );
-      scene.add(cloud);
-      fogClouds.push({
-        mesh: cloud,
-        speed: 0.8 + Math.random() * 1.2
-      });
-    }
-
-    // ============================================================================
-    // 8. SESLENDİRME MOTORU (MP3 DOSYASI + WEB SPEECH API YEDEK DESTEĞİ)
-    // ============================================================================
-    const voAudio = document.getElementById('vo-audio');
-    const voiceoverInput = document.getElementById('voiceover-input');
-    const audioStatusText = document.getElementById('audio-status-text');
-    let customAudioLoaded = false;
-
-    voiceoverInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        voAudio.src = url;
-        customAudioLoaded = true;
-        audioStatusText.textContent = "Yüklendi: " + file.name;
-      }
-    });
-
-    document.getElementById('btn-audio-upload').addEventListener('click', () => {
-      voiceoverInput.click();
-    });
-
-    // Ortamdaki su sesini Web Audio API ile gerçek zamanlı sentezleme
-    let audioCtx = null;
-    let waterGainNode = null;
-
-    function initAmbientWaterAudio() {
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContextClass();
-        const bufferSize = audioCtx.sampleRate * 2;
-        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          output[i] = Math.random() * 2 - 1;
-        }
-
-        const whiteNoise = audioCtx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-        whiteNoise.loop = true;
-
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 950;
-        filter.Q.value = 0.7;
-
-        waterGainNode = audioCtx.createGain();
-        waterGainNode.gain.value = 0.04;
-
-        whiteNoise.connect(filter);
-        filter.connect(waterGainNode);
-        waterGainNode.connect(audioCtx.destination);
-        whiteNoise.start(0);
-      } catch (err) {
-        // Tarayıcı ses politikası engellerse sessiz devam et
-      }
-    }
-
-    // ============================================================================
-    // 9. ZAMAN ÇİZELGESİ, KAMERA İNTERPOLASYONU VE ANİMASYON DÖNGÜSÜ
-    // ============================================================================
-    const subtitleEl = document.getElementById('vo-subtitle');
-    const phaseLabelEl = document.getElementById('scene-phase-label');
-    const ctaBannerEl = document.getElementById('cta-banner');
-    const timelineFillEl = document.getElementById('timeline-fill');
-    const chapterBtns = document.querySelectorAll('.chapter-btn');
-
-    let isPlaying = false;
-    let startTimestamp = null;
-    let manualTimeOffset = 0;
-    let activeSceneIndex = -1;
-
-    function startPresentation(jumpToSeconds = 0) {
-      document.getElementById('start-overlay').classList.add('hidden');
-      if (!audioCtx) initAmbientWaterAudio();
-
-      manualTimeOffset = jumpToSeconds;
-      startTimestamp = performance.now();
-      isPlaying = true;
-
-      if (voAudio.src) {
-        voAudio.currentTime = jumpToSeconds;
-        voAudio.play().catch(() => {});
-      }
-    }
-
-    document.getElementById('btn-start-presentation').addEventListener('click', () => {
-      startPresentation(0);
-    });
-
-    document.getElementById('btn-restart').addEventListener('click', () => {
-      startPresentation(0);
-    });
-
-    chapterBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.getAttribute('data-idx'), 10);
-        if (STORY_SCENES[idx]) {
-          startPresentation(STORY_SCENES[idx].start);
-        }
-      });
-    });
-
-    // 9:16 Dikey / 16:9 Yatay Mod Değiştirici
-    const viewportWrapper = document.getElementById('viewport-wrapper');
-    const btnAspect = document.getElementById('btn-aspect');
-    btnAspect.addEventListener('click', () => {
-      viewportWrapper.classList.toggle('vertical-mode');
-      btnAspect.classList.toggle('active');
-      setTimeout(onWindowResize, 520);
-      onWindowResize();
-    });
-
-    function onWindowResize() {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
-    window.addEventListener('resize', onWindowResize);
-
-    // Yardımcı Yumuşak Geçiş Fonksiyonu
-    function lerp(a, b, t) {
-      return a + (b - a) * t;
-    }
-
-    function smoothstep(t) {
-      return t * t * (3 - 2 * t);
-    }
-
-    let prevFrameTime = performance.now();
-
-    function animate(now) {
-      requestAnimationFrame(animate);
-
-      const dt = Math.min((now - prevFrameTime) / 1000, 0.1);
-      prevFrameTime = now;
-
-      // Geçen Süreyi Hesapla (Ses dosyası çalıyorsa onun saatini baz al)
-      let elapsed = 0;
-      if (isPlaying) {
-        if (!voAudio.paused && !isNaN(voAudio.currentTime) && voAudio.currentTime > 0.05) {
-          elapsed = voAudio.currentTime;
-        } else {
-          elapsed = manualTimeOffset + (now - startTimestamp) / 1000;
-        }
-
-        if (elapsed >= TOTAL_DURATION) {
-          elapsed = 0;
-          manualTimeOffset = 0;
-          startTimestamp = now;
-          if (voAudio.src) {
-            voAudio.currentTime = 0;
-            voAudio.play().catch(() => {});
-          }
-        }
-      } else {
-        // Başlangıç ekranındayken yavaş panoramik dönüş
-        elapsed = (now * 0.0004) % 5.0;
-      }
-
-      // İlerleme çubuğu güncellemesi
-      const totalProgress = Math.min(elapsed / TOTAL_DURATION, 1);
-      timelineFillEl.style.width = (totalProgress * 100).toFixed(2) + '%';
-
-      // Aktif Sahneyi Bul
-      let sIdx = STORY_SCENES.findIndex(s => elapsed >= s.start && elapsed < s.end);
-      if (sIdx === -1) sIdx = STORY_SCENES.length - 1;
-      const sceneData = STORY_SCENES[sIdx];
-      const localT = smoothstep(Math.min(Math.max((elapsed - sceneData.start) / (sceneData.end - sceneData.start), 0), 1));
-
-      // Sahne Değiştiğinde Altyazı ve Bölüm Butonlarını Güncelle
-      if (sIdx !== activeSceneIndex) {
-        activeSceneIndex = sIdx;
-        phaseLabelEl.textContent = sceneData.phase;
-        subtitleEl.style.opacity = '0';
-        subtitleEl.style.transform = 'translateY(6px)';
-
-        setTimeout(() => {
-          subtitleEl.innerHTML = sceneData.html;
-          subtitleEl.style.opacity = '1';
-          subtitleEl.style.transform = 'translateY(0)';
-        }, 180);
-
-        if (sIdx === 4) {
-          ctaBannerEl.classList.add('visible');
-        } else {
-          ctaBannerEl.classList.remove('visible');
-        }
-
-        chapterBtns.forEach((b, i) => {
-          b.classList.toggle('active', i === sIdx);
-        });
-      }
-
-      // Kamera Pozisyonu ve Odak Noktası İnterpolasyonu
-      const camX = lerp(sceneData.camStart.pos[0], sceneData.camEnd.pos[0], localT);
-      const camY = lerp(sceneData.camStart.pos[1], sceneData.camEnd.pos[1], localT);
-      const camZ = lerp(sceneData.camStart.pos[2], sceneData.camEnd.pos[2], localT);
-      camera.position.set(camX, camY, camZ);
-
-      const lookX = lerp(sceneData.camStart.look[0], sceneData.camEnd.look[0], localT);
-      const lookY = lerp(sceneData.camStart.look[1], sceneData.camEnd.look[1], localT);
-      const lookZ = lerp(sceneData.camStart.look[2], sceneData.camEnd.look[2], localT);
-      camera.lookAt(lookX, lookY, lookZ);
-
-      // Sis Yoğunluğu ve Su Sesi Seviyesi
-      scene.fog.density = lerp(scene.fog.density, sceneData.fogDensity, dt * 2);
-      if (waterGainNode && isPlaying) {
-        waterGainNode.gain.value = 0.025 * sceneData.fountainPower;
-      }
-
-      // Su Kuyusu Fıskiye Parçacıkları Fiziği
-      const positions = dropGeo.attributes.position.array;
-      const power = sceneData.fountainPower;
-
-      for (let i = 0; i < DROP_COUNT; i++) {
-        const vel = dropVelocities[i];
-        vel.phase += dt * 2.4 * power;
-
-        const tCycle = (vel.phase % 1.6);
-        positions[i * 3]     = vel.vx * tCycle * power;
-        positions[i * 3 + 1] = 2.1 + (vel.vy * power * tCycle) - (0.5 * 6.8 * tCycle * tCycle);
-        positions[i * 3 + 2] = vel.vz * tCycle * power;
-
-        if (positions[i * 3 + 1] < 1.05) {
-          positions[i * 3 + 1] = 1.05;
-        }
-      }
-      dropGeo.attributes.position.needsUpdate = true;
-
-      // Havuz Su Seviyesi ve Parıltısı
-      waterSurface.position.y = 0.55 + sceneData.waterLevel * 0.52 + Math.sin(now * 0.004) * 0.02;
-      wellGlowLight.intensity = 1.1 + Math.sin(now * 0.005) * 0.4 + sceneData.fountainPower * 0.6;
-
-      // Ağaçların Yeşermesi ve Büyümesi
-      trees.forEach((tr, idx) => {
-        const targetScale = sceneData.greeneryScale + Math.sin(now * 0.002 + idx) * 0.03;
-        tr.scale.setScalar(lerp(tr.scale.x, targetScale, dt * 2.5));
-      });
-
-      // Yetimhane Öğrencilerinin Kuyu Etrafındaki Neşeli Hareketi
-      childrenModels.forEach((ch) => {
-        ch.angle += dt * ch.speed;
-        const cx = Math.cos(ch.angle) * ch.radius;
-        const cz = Math.sin(ch.angle) * ch.radius;
-        ch.mesh.position.set(cx, Math.abs(Math.sin(now * 0.006 + ch.bobOffset)) * 0.18, cz);
-        ch.mesh.lookAt(0, 1.2, 0);
-      });
-
-      // Ön Yoldaki İDDEF Yardım Araçları Trafiği
-      vehicles.forEach((v) => {
-        v.mesh.position.x += v.dir * v.speed * dt;
-        if (v.dir > 0 && v.mesh.position.x > 85) v.mesh.position.x = -85;
-        if (v.dir < 0 && v.mesh.position.x < -85) v.mesh.position.x = 85;
-      });
-
-      // Rolling Fog (Süzülen Sis Katmanları)
-      fogClouds.forEach((fc) => {
-        fc.mesh.position.x += fc.speed * dt;
-        if (fc.mesh.position.x > 70) fc.mesh.position.x = -70;
-        fc.mesh.lookAt(camera.position);
-      });
-
-      renderer.render(scene, camera);
-    }
-
-    requestAnimationFrame(animate);
-  </script>
-</body>
-</html>
+# ROLE & CREATIVE DIRECTION
+
+You are an award-winning motion design director, creative storyteller, technical illustrator, and senior animation art director.
+
+Your task is to create a complete 45-second vertical motion design film for İDDEF (İnsana Değer Veren Dernekler Federasyonu), explaining the importance, construction, and humanitarian impact of clean-water wells in underserved communities across Africa and Asia.
+
+This is not a generic charity advertisement.
+
+It must feel like a meticulously art-directed, high-end motion design film: technically intelligent, emotionally meaningful, visually distinctive, and worthy of an international design studio showreel.
+
+## CORE CONCEPT
+
+ONE LINE. THREE TRANSFORMATIONS. COUNTLESS LIVES.
+
+A single blue pencil line is drawn on paper.
+
+It becomes the engineering diagram of a water well.
+
+It descends underground, revealing geological layers and a groundwater aquifer.
+
+It becomes the drilling mechanism, the well casing, the pump, and finally flowing water.
+
+The same line transforms into the journey of people who need clean water.
+
+It travels through Africa and Asia, connects communities, and becomes a water droplet.
+
+The droplet becomes the visual symbol of a life changed.
+
+The line must NEVER disappear. Every new scene must be constructed from the geometry, lines, shapes, and typography of the previous scene.
+
+NO CUTS.
+NO FADE TRANSITIONS.
+NO CROSSFADE.
+NO CAMERA MOVEMENT.
+
+The camera remains locked, front-facing, and perfectly vertical throughout.
+
+## OUTPUT SPECIFICATIONS
+
+- Duration: exactly 45 seconds.
+- Aspect ratio: 9:16.
+- Resolution: 1080 × 1920.
+- Frame rate: 30 FPS.
+- Total frames: 1350.
+- Color depth: clean, high-quality production output.
+- Motion style: precision-engineered, smooth, controlled.
+- Typography: Geist only.
+- Large headings: Geist Black / weight 900.
+- Secondary labels: Geist SemiBold to ExtraBold / weights 600–800.
+- Small typography: 24–28 px, tracking 0.14–0.30 em.
+- Keep all essential content inside a centered 860 × 1580 px safe area.
+- No important typography or logos near the outer edges.
+
+## ART DIRECTION
+
+Use a restrained, premium visual language.
+
+Primary palette:
+- Paper cream: #EDE6D5
+- Blueprint blue: #1B3ED2
+- Hologram cyan: #45F0DD
+- Black: #07080A
+- Graphite: #16161A
+- White: #FFFFFF
+
+Visual progression:
+
+STAGE 1 — ENGINEERING / PAPER
+Cream paper, subtle grain, blue technical grid, hand-drawn pencil lines, cross-hatching, architectural annotations.
+
+STAGE 2 — CONSTRUCTION / BLUEPRINT
+Deep blueprint blue, white engineering lines, technical cross-sections, dashed hidden geometry, clean measurements, geological layers.
+
+STAGE 3 — HUMAN IMPACT / CINEMATIC LIGHT
+Black backgrounds, cyan and white line work, controlled scan lines, realistic water surfaces, restrained cinematic lighting.
+
+No generic gradients.
+No particle explosions.
+No lens flares.
+No glow effects.
+No RGB split.
+No artificial camera shake.
+No generic stock-template transitions.
+No exaggerated bounce easing.
+
+Use a critically damped spring for mechanical movements:
+1 - (1 + wt)e^(-wt), with w between 12 and 40.
+
+Use exponential easing for wipes and controlled mechanical presses.
+
+Every movement must have a visual purpose.
+
+## THE CONTINUOUS LINE RULE
+
+The original blue pencil line must remain visually traceable throughout the entire film.
+
+It changes material and function:
+1. Pencil stroke.
+2. Engineering dimension.
+3. Drilling axis.
+4. Well casing.
+5. Groundwater flow.
+6. Water pump mechanism.
+7. Flowing water.
+8. A person's route to water.
+9. A connected community network.
+10. Final water droplet.
+
+The line must physically transform into each new object. Never simply replace one object with another.
+
+## HUMAN REPRESENTATION
+
+Show people respectfully and realistically.
+
+Use documentary-inspired visual language, not stereotypical poverty imagery.
+
+Show:
+- People walking to distant water sources.
+- Containers being carried.
+- Women, men and children participating in everyday community life.
+- Water being collected from a functioning hand pump.
+- A family using clean water.
+- A community gathering around a newly accessible water point.
+
+Do not portray every African or Asian community as helpless or identical.
+
+Show dignity, daily life, resilience, and the positive impact of access to clean water.
+
+Do not invent specific project locations, beneficiaries, well depths, drilling durations, or construction statistics.
+
+## TECHNICAL ACCURACY
+
+The water-well construction sequence must be scientifically plausible.
+
+Show:
+1. Site selection and geological assessment.
+2. Drilling equipment preparing the borehole.
+3. The drill bit penetrating successive underground layers.
+4. Reaching a water-bearing geological formation.
+5. Installing the casing and screened section.
+6. Adding an appropriate filter pack where required.
+7. Developing and flushing the well to remove fine sediments.
+8. Installing the pump.
+9. Testing the water and confirming its suitability for drinking.
+10. The first controlled flow of water.
+
+Do not imply that reaching groundwater automatically makes it safe to drink. Include water-quality testing and appropriate protection of the well.
+
+Different well designs and geological conditions require different construction methods. Present this as a clear illustrative cross-section, not a universal engineering specification.
+
+## SOUND DESIGN
+
+Use a sophisticated original soundscape.
+
+- Pencil scratching.
+- Drafting ruler movements.
+- Subtle mechanical clicks.
+- Low-frequency drilling rhythm.
+- Underground geological rumble.
+- A controlled water breakthrough sound.
+- Natural water flow.
+- Subtle human ambience.
+- A restrained emotional musical rise.
+
+Music must support the narration without overpowering it.
+
+No dramatic trailer impacts.
+No excessive cinematic booms.
+No artificial inspirational choir.
+
+## LANGUAGE
+
+All visible text and voice-over must be in Turkish.
+
+Use correct Turkish spelling, punctuation, and diacritics.
+
+Institutional tone: warm, sincere, informative, dignified.
+
+Do not use exaggerated emotional claims.
+
+## FINAL OBJECTIVE
+
+The viewer must understand three things within 45 seconds:
+
+1. A water well is built through a carefully planned technical process.
+2. Millions of people still face barriers to safe drinking water, particularly in underserved rural communities.
+3. A properly constructed, tested, and maintained water well can make a meaningful difference to an entire community.
+
+The final message must connect the technical construction of a well with its human meaning.
+
+End with İDDEF's identity and the message:
+
+"Bir su kuyusu, bir topluluğun hayatına umut olur."
+
+Do not invent or redraw the official İDDEF logo. Reserve a clean area for the authentic logo asset.
+
+Now produce the complete production-ready storyboard and animation specification according to the following second-by-second timeline.
+
+
+
+
+# SECOND-BY-SECOND STORYBOARD
+## TOTAL DURATION: 00:45:00
+
+Every second must contain a meaningful animation event. No static scene may remain unchanged for more than 0.5 seconds.
+
+All scene transitions must be continuous geometric transformations.
+
+### SCENE 01 — THE FIRST LINE
+00:00–00:05
+
+00:00
+Full-screen warm cream drafting paper. A tiny graphite point appears at the center. A blue pencil line begins drawing from left to right. The sound of a real pencil touching paper.
+
+00:01
+The line extends and develops precise engineering measurement marks. A small label appears: "SU KUYUSU / TEKNİK ÇİZİM". A vertical measurement axis grows downward.
+
+00:02
+The line bends into a simplified water-well cross-section. The ground surface is drawn first, followed by underground geological layers.
+
+00:03
+The drawing reveals the well's vertical drilling axis. Fine blue hatching fills the soil layers. The words "YERİN ALTINDA BİR YOLCULUK" are briefly revealed.
+
+00:04
+The top of the drawing transforms into a drilling rig silhouette. Its mast rises from the blueprint. The original pencil line becomes the drill shaft.
+
+00:05
+The drill bit begins rotating and descending. The paper surface opens into a technical underground cutaway. A hard-edged blueprint-blue shape floods the frame from the center.
+
+### SCENE 02 — HOW A WELL IS BUILT
+00:05–00:15
+
+00:06
+The camera remains fixed. The drilling bit penetrates the first geological layer. Rock, sand and soil are distinguished through precise line patterns.
+
+00:07
+The drill descends further. Depth markings scroll vertically along the left side. A dotted technical guide follows the drilling axis.
+
+00:08
+The drill reaches a groundwater-bearing geological layer. A horizontal cyan-blue band appears beneath the soil. Do not show water appearing magically; show the aquifer as a geological formation.
+
+00:09
+The drill is withdrawn. A casing pipe descends into the borehole. Its geometry aligns perfectly with the original blue pencil line.
+
+00:10
+A cutaway reveals the casing and screened intake section. Fine gravel or filter material appears around the screen where appropriate to the depicted well design.
+
+00:11
+The well is developed. Small sediment lines are drawn moving upward and out of the borehole as the well is flushed. The water becomes visually clearer.
+
+00:12
+The wellhead is sealed and protected. The pump mechanism is assembled. Every mechanical part connects through precise blueprint geometry.
+
+00:13
+The hand pump is completed. A small technical label appears: "POMPA MONTAJI".
+
+00:14
+A water-testing sample container enters the frame. Three small indicators are drawn beside it: "KALİTE", "GÜVENLİK", "TEST". These represent checks, not invented laboratory results.
+
+00:15
+A hand operates the pump. The original vertical blue line turns into a stream of water. The first flow emerges in a controlled, elegant motion.
+
+### SCENE 03 — WHY CLEAN WATER MATTERS
+00:15–00:23
+
+00:16
+The water stream expands across the screen and transforms into a horizontal cyan scan line. The blueprint begins morphing into a cinematic black environment.
+
+00:17
+A documentary-inspired scene appears through the continuous line: a rural community and a distant water collection point. A person carries an empty water container.
+
+00:18
+The person's walking route is illustrated as a thin cyan line across the ground. The route extends beyond the frame, suggesting distance without inventing a specific number of kilometres.
+
+00:19
+A second person joins the route. Their containers are visible. Their silhouettes are dignified and natural, never exaggerated.
+
+00:20
+The water container is placed on the ground. Its outline transforms into a large typographic frame.
+
+00:21
+Large white typography appears:
+"TEMİZ SUYA ERİŞİM"
+Below it:
+"HERKES İÇİN AYNI DERECEDE KOLAY DEĞİL."
+
+00:22
+The typography separates into two geographic outlines: Africa and Asia. Their contours are constructed from the same continuous cyan line.
+
+00:23
+The two continents fill the frame. Selected underserved rural areas are highlighted using restrained line patterns. Avoid depicting entire continents as uniformly water-insecure.
+
+### SCENE 04 — THE SCALE OF THE NEED
+00:23–00:30
+
+00:24
+The Africa outline becomes a statistical infographic. A large figure builds from individual geometric line segments.
+
+00:25
+"2,1 MİLYAR"
+appears in bold white.
+
+00:26
+The explanatory text appears:
+"İNSAN, GÜVENLİ ŞEKİLDE YÖNETİLEN İÇME SUYUNA ERİŞEMİYOR."
+
+00:27
+The figure transforms into a horizontal comparison bar. A new number is drawn:
+"%32"
+
+00:28
+Supporting text:
+"Sahra Altı Afrika'da nüfusun yalnızca %32'si güvenli şekilde yönetilen içme suyu hizmetine erişebiliyor."
+
+00:29
+The comparison bar extends toward an outline of Asia. The map transforms into a network of rural settlements and water points. No unsupported Asia-wide percentage is shown.
+
+00:30
+The map's lines converge into a single water droplet. The music becomes slightly warmer. The droplet remains suspended for less than half a second before continuing its movement.
+
+### SCENE 05 — WHAT ONE WELL CHANGES
+00:30–00:38
+
+00:31
+The water droplet falls. Its outline becomes a real stream of water entering a container.
+
+00:32
+The scene reveals a community member collecting water from a properly constructed hand pump. Natural daylight, documentary-inspired framing, realistic water movement.
+
+00:33
+Another person fills a container. A child observes nearby. Keep the people authentic, respectful and naturally composed.
+
+00:34
+The stream of water transforms into a thin cyan line connecting several houses. The line branches to represent a community benefiting from a nearby water point.
+
+00:35
+Three simple typographic statements appear one after another:
+"DAHA KOLAY ERİŞİM"
+"DAHA GÜVENLİ SU"
+"GÜNLÜK HAYATA DESTEK"
+
+00:36
+The three statements align into one vertical composition. The water line passes through the center, connecting every word.
+
+00:37
+A wide water ripple forms. The ripple's circular geometry transforms into a technical drawing of a completed water well. The film briefly reconnects with its opening construction diagram.
+
+00:38
+The completed well illustration and real water stream merge into a single composition. The original pencil line is now visibly flowing water.
+
+### SCENE 06 — FINAL MESSAGE
+00:38–00:45
+
+00:39
+The water stream slows and becomes a single large droplet. Background transitions to deep black through a hard-edged geometric transformation.
+
+00:40
+White and cyan line work outlines the droplet. Inside it, the silhouettes of a small community appear as a subtle line illustration.
+
+00:41
+Large typography enters:
+"BİR SU KUYUSU..."
+
+00:42
+The words transform into:
+"BİR HAYATA UMUT OLUR."
+
+00:43
+The typography moves upward slightly. The official İDDEF logo asset appears in the reserved central brand area. Do not fabricate or approximate the logo.
+
+00:44
+The final campaign message appears:
+"Temiz suya erişim için sen de destek ol."
+
+Below:
+"İDDEF | Muhabbetle İnsanlığa Hizmete"
+
+The official campaign URL or donation address must be supplied by the client. Do not invent a URL or donation amount.
+
+00:45
+The water droplet contracts into the original blue pencil point. The cream paper from the opening reappears through a geometric transformation. The first frame and last frame must match perfectly for a seamless loop.
+
+END.
+
+## TRANSITION ENGINEERING
+
+Transitions are not independent effects. They are transformations of the same visual object.
+
+- 00:05: paper drawing becomes a full-frame blueprint.
+- 00:15: water flow becomes the horizontal scene transition.
+- 00:23: continental outlines emerge from the same water line.
+- 00:30: geographic geometry contracts into a droplet.
+- 00:38: community water flow becomes the final droplet.
+- 00:45: the droplet becomes the original pencil point.
+
+Never use a conventional edit to hide an incomplete transformation.
+
+## TYPOGRAPHY AND GRAPHIC HIERARCHY
+
+Only use Geist.
+
+Main typography:
+- Geist Black, 900.
+- Large words, centered.
+- Strong geometric letterforms.
+- Minimal but confident tracking.
+
+Secondary typography:
+- Geist SemiBold, 600–700.
+- 24–28 px.
+- Technical labels and data annotations.
+- Consistent baseline and grid.
+
+All Turkish characters must render correctly:
+Ç, Ğ, İ, Ö, Ş, Ü, ç, ğ, ı, ö, ş, ü.
+
+Do not use decorative serif fonts or alternative typefaces.
+
+## FINAL FRAME REQUIREMENTS
+
+The final frame must:
+- Clearly identify İDDEF.
+- Have a genuine humanitarian message.
+- Include a clean call to action.
+- Preserve the continuous-line concept.
+- Return to the exact first-frame composition for looping.
+- Never use a fabricated logo.
+
+The film must be emotionally effective without becoming melodramatic.
+
+## FINAL DELIVERABLES
+
+Do not return only a conceptual storyboard.
+
+Deliver the following:
+
+1. Complete 45-second production storyboard with exact frame-level timing.
+2. Full Turkish voice-over script synchronized with the animation.
+3. Every visual element, including the well cross-section, drilling equipment, geological layers, water pump, water stream, maps and typography.
+4. Detailed animation curves, object positions, sizes, transformations and transition timings.
+5. Exact color and typography specifications.
+6. Complete sound design and music direction.
+7. A production asset checklist, including the official İDDEF logo placeholder.
+8. A seamless loop verification plan.
+9. Export specifications for Instagram Reels, Stories and other vertical platforms.
+
+For every scene, specify:
+- Start frame and end frame.
+- Starting and ending object positions.
+- Scale and rotation.
+- Easing curve.
+- Stroke width and fill behavior.
+- Transition method.
+- Sound effect synchronization.
+- Voice-over synchronization.
+
+Maintain visual continuity across all 1350 frames.
+
+Do not omit intermediate animation states.
+
+If you cannot render the entire film in one pass, create a complete production-ready implementation divided into logically connected scenes. All scenes must share the same visual coordinate system, assets, typography, colors and continuous-line geometry.
+
+Prioritize visual accuracy, technical plausibility, narrative clarity and seamless transitions over unnecessary visual effects.
